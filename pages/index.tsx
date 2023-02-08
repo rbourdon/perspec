@@ -13,9 +13,9 @@ export default function Home() {
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <link rel="icon" href="/favicon.ico" />
       </Head>
-      <main>
+      <main className="flex justify-center items-center min-h-screen">
         <div>
-          <p>Get started by going to /username</p>
+          <p>{`Get started by going to /{username}`}</p>
         </div>
       </main>
     </>

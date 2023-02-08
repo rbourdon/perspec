@@ -8,6 +8,7 @@ import { HashLoader } from "react-spinners";
 import { authOptions } from "pages/api/auth/[...nextauth]";
 import { getServerSession } from "next-auth/next";
 import type { InferGetStaticPropsType, GetStaticProps } from "next";
+import { signIn, signOut, useSession } from "next-auth/react";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -16,6 +17,28 @@ export default function Home({
   result,
 }: InferGetStaticPropsType<typeof getStaticProps>) {
   const router = useRouter();
+  const { data: session, status } = useSession();
+
+  if (status === "loading") {
+    return (
+      <main className="flex flex-col items-center min-h-screen">
+        <p>Loading...</p>
+      </main>
+    );
+  }
+
+  if (status === "unauthenticated") {
+    return (
+      <main className="flex flex-col items-center justify-center min-h-screen">
+        <p>
+          <button type="button" onClick={() => signIn()}>
+            Sign in
+          </button>
+        </p>
+      </main>
+    );
+  }
+
   return (
     <>
       <Head>
@@ -24,8 +47,13 @@ export default function Home({
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <link rel="icon" href="/favicon.ico" />
       </Head>
-      <main className="flex justify-center min-h-screen">
-        <div className="flex flex-col px-8 max-w-6xl py-4 min-h-screen items-center justify-center">
+      <main className="flex flex-col items-center min-h-screen">
+        <div className="w-full flex justify-end px-8 py-4">
+          <button type="button" onClick={() => signOut()}>
+            Sign out
+          </button>
+        </div>
+        <div className="flex flex-col px-8 max-w-6xl flex-grow items-center justify-center">
           {!router.isFallback ? (
             <>
               <p className="font-bold text-4xl">{`@${username}`}</p>
@@ -120,7 +148,6 @@ export const getStaticProps: GetStaticProps = async (context) => {
       props: { username, result: response.data.choices[0].text }, // will be passed to the page component as props
     };
   } catch (e) {
-    console.log(e);
     return {
       props: { username, result: `Failed to generate response. Error: ${e}` },
     };
