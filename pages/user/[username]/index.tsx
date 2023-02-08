@@ -141,8 +141,8 @@ export const getStaticProps: GetStaticProps = async (context) => {
   try {
     const response = await openai.createCompletion({
       model: "text-davinci-003",
-      prompt: `Acting as a psychiatrist, describe the author of these tweets in detail and list of some of their personal values and interests: ${tweetText}.`,
-      temperature: 0.8,
+      prompt: `Provided some tweets, act as a psychiatrist by describing the author in detail, including a list of some of their personal values and interests.\nTweets: ${tweetText}.\nAnalysis:`,
+      temperature: 0.75,
       max_tokens: 350,
     });
     if (response.status === 429) {
