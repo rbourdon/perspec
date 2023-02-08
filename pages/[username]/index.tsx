@@ -1,17 +1,20 @@
 import Head from "next/head";
 import Image from "next/image";
 import { Inter } from "@next/font/google";
-import styles from "@/styles/Home.module.css";
 import { Client } from "twitter-api-sdk";
 import { text } from "stream/consumers";
 import { useRouter } from "next/router";
 import { HashLoader } from "react-spinners";
 import { authOptions } from "pages/api/auth/[...nextauth]";
 import { getServerSession } from "next-auth/next";
+import type { InferGetStaticPropsType, GetStaticProps } from "next";
 
 const inter = Inter({ subsets: ["latin"] });
 
-export default function Home({ username, result }) {
+export default function Home({
+  username,
+  result,
+}: InferGetStaticPropsType<typeof getStaticProps>) {
   const router = useRouter();
   return (
     <>
@@ -39,26 +42,49 @@ export default function Home({ username, result }) {
   );
 }
 
-export async function getStaticProps(context) {
-  const session = await getServerSession(context.req, context.res, authOptions);
-  console.log(session);
+export const getStaticProps: GetStaticProps = async (context) => {
+  const username = context.params?.username as string;
   const { Configuration, OpenAIApi } = require("openai");
+
+  //Return erro if missing env vars
+  if (
+    !process.env.TWITTER_BEARER_TOKEN ||
+    !process.env.OPENAI_API_KEY ||
+    !username
+  ) {
+    return { props: { username, result: "Environment Configuration Error" } };
+  }
+
   const configuration = new Configuration({
     apiKey: process.env.OPENAI_API_KEY,
   });
   const openai = new OpenAIApi(configuration);
   const client = new Client(process.env.TWITTER_BEARER_TOKEN);
-  const username = context.params.username;
+
   const idResponse = await client.users.findUserByUsername(username);
+
+  if (!idResponse.data?.id) {
+    return { props: { username, result: "No user found" } };
+  }
+
   const tweets1 = await client.tweets.usersIdTweets(idResponse.data?.id, {
     max_results: 100,
     exclude: ["replies", "retweets"],
   });
+
+  if (!tweets1?.meta?.oldest_id) {
+    return { props: { username, result: "Failed to load twitter metadata" } };
+  }
+
   const tweets2 = await client.tweets.usersIdTweets(idResponse.data?.id, {
     max_results: 100,
     until_id: tweets1.meta.oldest_id,
     exclude: ["replies", "retweets"],
   });
+
+  if (!tweets1?.data) {
+    return { props: { username, result: "Failed to load tweets" } };
+  }
 
   const tweets = [...tweets1.data, ...(tweets2.data ? tweets2.data : [])];
   const tweetText = tweets
@@ -86,7 +112,7 @@ export async function getStaticProps(context) {
   return {
     props: { username, result: response.data.choices[0].text }, // will be passed to the page component as props
   };
-}
+};
 
 export async function getStaticPaths() {
   return {
