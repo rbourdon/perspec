@@ -97,21 +97,34 @@ export const getStaticProps: GetStaticProps = async (context) => {
     .split(" ")
     .slice(0, 2300)
     .join(" ");
-  console.log(tweetText.slice(0, tweetText.lastIndexOf(".") + 1));
-  console.log(tweetText.split(" ").length);
-  const response = await openai.createCompletion({
-    model: "text-davinci-003",
-    prompt: `Acting as a psychiatrist, desribe the author of these tweets in detail and then make a list of some of their personal values and interests: ${tweetText.slice(
-      0,
-      tweetText.lastIndexOf(".") + 1
-    )}`,
-    temperature: 0.85,
-    max_tokens: 500,
-  });
-  console.log(response.data.choices[0].text);
-  return {
-    props: { username, result: response.data.choices[0].text }, // will be passed to the page component as props
-  };
+  try {
+    const response = await openai.createCompletion({
+      model: "text-davinci-003",
+      prompt: `Acting as a psychiatrist, desribe the author of these tweets in detail and then make a list of some of their personal values and interests: ${tweetText.slice(
+        0,
+        tweetText.lastIndexOf(".") + 1
+      )}`,
+      temperature: 0.85,
+      max_tokens: 300,
+    });
+    if (response.status === 429) {
+      return {
+        props: {
+          username,
+          result: `Failed to generate response. Too many requests, try again in a moment.`,
+        },
+      };
+    }
+
+    return {
+      props: { username, result: response.data.choices[0].text }, // will be passed to the page component as props
+    };
+  } catch (e) {
+    console.log(e);
+    return {
+      props: { username, result: `Failed to generate response. Error: ${e}` },
+    };
+  }
 };
 
 export async function getStaticPaths() {
