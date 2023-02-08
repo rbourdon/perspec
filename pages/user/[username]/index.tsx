@@ -75,7 +75,7 @@ export default function Home({
 export const getStaticProps: GetStaticProps = async (context) => {
   const username = context.params?.username as string;
   const { Configuration, OpenAIApi } = require("openai");
-
+  const { encode, decode } = require("gpt-3-encoder");
   //Return erro if missing env vars
   if (
     !process.env.TWITTER_BEARER_TOKEN ||
@@ -128,7 +128,7 @@ export const getStaticProps: GetStaticProps = async (context) => {
   }
 
   const tweets = [...tweets1.data, ...(tweets2.data ? tweets2.data : [])];
-  const tweetText = tweets
+  const tweetTextRaw = tweets
     .map((tweet) => tweet.text)
     .filter((text) => text.split(" ").length > 6)
     .join(" ")
@@ -138,12 +138,15 @@ export const getStaticProps: GetStaticProps = async (context) => {
     .split(" ")
     .slice(0, 2500)
     .join(" ");
+
+  const encoded = encode(tweetTextRaw);
+  const tweetText = decode(encoded.slice(0, 3500));
   try {
     const response = await openai.createCompletion({
       model: "text-davinci-003",
       prompt: `Provided some tweets, act as a psychiatrist by describing the author in detail, including a list of some of their personal values and interests.\nTweets: ${tweetText}.\nAnalysis:`,
       temperature: 0.75,
-      max_tokens: 350,
+      max_tokens: 400,
     });
     if (response.status === 429) {
       return {
