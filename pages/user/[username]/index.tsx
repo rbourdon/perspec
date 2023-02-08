@@ -154,13 +154,14 @@ export const getStaticProps: GetStaticProps = async (context) => {
           realName,
           username,
           result: `Failed to generate response. Too many requests, try again in a moment.`,
-          revalidate: 45,
         },
+        revalidate: 60,
       };
     }
 
     return {
-      props: { realName, username, result: response.data.choices[0].text }, // will be passed to the page component as props
+      props: { realName, username, result: response.data.choices[0].text },
+      revalidate: false,
     };
   } catch (e) {
     return {
@@ -169,7 +170,7 @@ export const getStaticProps: GetStaticProps = async (context) => {
         username,
         result: `Failed to generate response. Error: ${e}`,
       },
-      revalidate: 45,
+      revalidate: 60,
     };
   }
 };
