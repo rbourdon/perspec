@@ -13,6 +13,7 @@ import { signIn, signOut, useSession } from "next-auth/react";
 const inter = Inter({ subsets: ["latin"] });
 
 export default function Home({
+  realName,
   username,
   result,
 }: InferGetStaticPropsType<typeof getStaticProps>) {
@@ -57,7 +58,8 @@ export default function Home({
           {!router.isFallback ? (
             <>
               <p className="font-bold text-4xl">{`@${username}`}</p>
-              <p className="mt-8 whitespace-pre-wrap">{result}</p>
+              <p className="text-md mt-1">{realName}</p>
+              <p className="mt-8 whitespace-pre-wrap">{result.trim()}</p>
             </>
           ) : (
             <div className="flex items-center h-full justify-center">
@@ -80,7 +82,13 @@ export const getStaticProps: GetStaticProps = async (context) => {
     !process.env.OPENAI_API_KEY ||
     !username
   ) {
-    return { props: { username, result: "Environment Configuration Error" } };
+    return {
+      props: {
+        realName: "Unknown",
+        username,
+        result: "Environment Configuration Error",
+      },
+    };
   }
 
   const configuration = new Configuration({
@@ -91,9 +99,12 @@ export const getStaticProps: GetStaticProps = async (context) => {
 
   const idResponse = await client.users.findUserByUsername(username);
 
-  if (!idResponse.data?.id) {
-    return { props: { username, result: "No user found" } };
+  if (!idResponse.data?.id || !idResponse.data?.name) {
+    return {
+      props: { realName: "Unknown", username, result: "No user found" },
+    };
   }
+  const realName = idResponse.data.name;
 
   const tweets1 = await client.tweets.usersIdTweets(idResponse.data?.id, {
     max_results: 100,
@@ -101,7 +112,9 @@ export const getStaticProps: GetStaticProps = async (context) => {
   });
 
   if (!tweets1?.meta?.oldest_id) {
-    return { props: { username, result: "Failed to load twitter metadata" } };
+    return {
+      props: { realName, username, result: "Failed to load twitter metadata" },
+    };
   }
 
   const tweets2 = await client.tweets.usersIdTweets(idResponse.data?.id, {
@@ -111,7 +124,7 @@ export const getStaticProps: GetStaticProps = async (context) => {
   });
 
   if (!tweets1?.data) {
-    return { props: { username, result: "Failed to load tweets" } };
+    return { props: { realName, username, result: "Failed to load tweets" } };
   }
 
   const tweets = [...tweets1.data, ...(tweets2.data ? tweets2.data : [])];
@@ -123,21 +136,19 @@ export const getStaticProps: GetStaticProps = async (context) => {
     .replaceAll("\n", " ")
     .replaceAll("  ", " ")
     .split(" ")
-    .slice(0, 2300)
+    .slice(0, 2500)
     .join(" ");
   try {
     const response = await openai.createCompletion({
       model: "text-davinci-003",
-      prompt: `Acting as a psychiatrist, desribe the author of these tweets in detail and then make a list of some of their personal values and interests: ${tweetText.slice(
-        0,
-        tweetText.lastIndexOf(".") + 1
-      )}`,
-      temperature: 0.85,
-      max_tokens: 300,
+      prompt: `Acting as a psychiatrist, describe the author of these tweets in detail and list of some of their personal values and interests: ${tweetText}.`,
+      temperature: 0.8,
+      max_tokens: 350,
     });
     if (response.status === 429) {
       return {
         props: {
+          realName,
           username,
           result: `Failed to generate response. Too many requests, try again in a moment.`,
         },
@@ -145,18 +156,22 @@ export const getStaticProps: GetStaticProps = async (context) => {
     }
 
     return {
-      props: { username, result: response.data.choices[0].text }, // will be passed to the page component as props
+      props: { realName, username, result: response.data.choices[0].text }, // will be passed to the page component as props
     };
   } catch (e) {
     return {
-      props: { username, result: `Failed to generate response. Error: ${e}` },
+      props: {
+        realName,
+        username,
+        result: `Failed to generate response. Error: ${e}`,
+      },
     };
   }
 };
 
 export async function getStaticPaths() {
   return {
-    paths: [{ params: { username: "rorybourdon" } }],
+    paths: [{ params: { username: "elonmusk" } }],
     fallback: true, // can also be true or 'blocking'
   };
 }

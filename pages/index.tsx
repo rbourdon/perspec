@@ -15,7 +15,7 @@ export default function Home() {
       </Head>
       <main className="flex justify-center items-center min-h-screen">
         <div>
-          <p>{`Get started by going to /{username}`}</p>
+          <p>{`Get started by going to /user/{username}`}</p>
         </div>
       </main>
     </>
