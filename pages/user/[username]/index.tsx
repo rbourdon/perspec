@@ -151,6 +151,7 @@ export const getStaticProps: GetStaticProps = async (context) => {
           realName,
           username,
           result: `Failed to generate response. Too many requests, try again in a moment.`,
+          revalidate: 45,
         },
       };
     }
@@ -165,6 +166,7 @@ export const getStaticProps: GetStaticProps = async (context) => {
         username,
         result: `Failed to generate response. Error: ${e}`,
       },
+      revalidate: 45,
     };
   }
 };
