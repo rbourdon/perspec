@@ -169,7 +169,7 @@ export const getStaticProps: GetStaticProps = async (context) => {
       props: {
         realName,
         username,
-        result: `Failed to generate response. Error: ${e}`,
+        result: `Failed to generate response. ${e}`,
       },
       revalidate: 60,
     };
