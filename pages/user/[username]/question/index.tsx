@@ -51,7 +51,7 @@ export default function Question({
     if (tweetText && question.length > 5) {
       try {
         setIsLoadingAnalysis(true);
-        const res = await fetch("http://localhost:3000/api/tweets/analyze", {
+        const res = await fetch("/api/tweets/analyze", {
           method: "POST",
           body: JSON.stringify({ tweetText, question }),
         });
