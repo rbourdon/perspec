@@ -46,15 +46,44 @@ export default async function handler(
   }
   const realName = idResponse.data.name;
 
+  //Search for key words from question
+  const searchTerms: string[] = [];
+  try {
+    const response = await openai.createCompletion({
+      model: "text-curie-001",
+      prompt: `Generate several search terms from this question: ${question}`,
+      temperature: 0.7,
+      max_tokens: 50,
+    });
+    if (response.status === 429) {
+      res.status(500).json({
+        status: "fail",
+        message: "Failed to get search terms from question.",
+      });
+      return;
+    }
+    searchTerms.push(
+      response.data.choices[0].text
+        .split(",")
+        .map((term: string) => `"${term.trim()}"`)
+        .join(" OR ")
+    );
+  } catch (e) {
+    res.status(200).json({
+      status: "fail",
+      data: {
+        analysis: `Failed to get search terms from question. Exceeding API limits.`,
+      },
+    });
+    return;
+  }
+
   const tweets1 = await client.tweets.tweetsRecentSearch({
-    query: `from:${idResponse.data?.id} (${question
-      ?.replace(/[^\p{L}\s]/gu, "")
-      .split(" ")
-      .filter((w) => w.length >= 3)
-      .join(" OR ")})`,
+    query: `from:${idResponse.data?.id} (${searchTerms[0]})`,
     max_results: 100,
   });
 
+  //Get all tweets
   const tweets2 = await client.tweets.usersIdTweets(idResponse.data?.id, {
     max_results: 100,
     exclude: ["replies", "retweets"],
