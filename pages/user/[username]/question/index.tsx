@@ -91,7 +91,7 @@ export default function Question({
               <p className="text-md mt-1">{realName}</p>
               <input
                 type="text"
-                className="w-full max-w-xl mt-16 text-sm px-4 py-2 bg-black/10 rounded-full focus:outline-none"
+                className="w-full max-w-xl mt-12 text-sm px-4 py-2 bg-black/10 rounded-full focus:outline-none"
                 onKeyDown={(e) => {
                   if (e.key === "Enter") {
                     analyzeTweets({
