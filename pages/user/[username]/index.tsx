@@ -6,7 +6,6 @@ import { text } from "stream/consumers";
 import { useRouter } from "next/router";
 import { HashLoader } from "react-spinners";
 import { authOptions } from "pages/api/auth/[...nextauth]";
-import { getServerSession } from "next-auth/next";
 import type { InferGetStaticPropsType, GetStaticProps } from "next";
 import { signIn, signOut, useSession } from "next-auth/react";
 
