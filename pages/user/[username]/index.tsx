@@ -12,7 +12,7 @@ import { signIn, signOut, useSession } from "next-auth/react";
 
 const inter = Inter({ subsets: ["latin"] });
 
-export default function Home({
+export default function User({
   realName,
   username,
   result,
@@ -102,6 +102,7 @@ export const getStaticProps: GetStaticProps = async (context) => {
   if (!idResponse.data?.id || !idResponse.data?.name) {
     return {
       props: { realName: "Unknown", username, result: "No user found" },
+      revalidate: false,
     };
   }
   const realName = idResponse.data.name;
@@ -114,6 +115,7 @@ export const getStaticProps: GetStaticProps = async (context) => {
   if (!tweets1?.meta?.oldest_id) {
     return {
       props: { realName, username, result: "Failed to load twitter metadata" },
+      revalidate: 60,
     };
   }
 
@@ -124,7 +126,10 @@ export const getStaticProps: GetStaticProps = async (context) => {
   });
 
   if (!tweets1?.data) {
-    return { props: { realName, username, result: "Failed to load tweets" } };
+    return {
+      props: { realName, username, result: "Failed to load tweets" },
+      revalidate: 60,
+    };
   }
 
   const tweets = [...tweets1.data, ...(tweets2.data ? tweets2.data : [])];
