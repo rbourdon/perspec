@@ -138,10 +138,7 @@ export const getStaticProps: GetStaticProps = async (context) => {
     .join(" ")
     .replace(/(?:https?|ftp):\/\/[\n\S]+/g, "")
     .replaceAll("\n", " ")
-    .replaceAll("  ", " ")
-    .split(" ")
-    .slice(0, 2500)
-    .join(" ");
+    .replaceAll("  ", " ");
 
   const encoded = encode(tweetTextRaw);
   const tweetText = decode(encoded.slice(0, 3500));

@@ -73,7 +73,7 @@ export default function Tweets({
 
 export const getStaticProps: GetStaticProps = async (context) => {
   const username = context.params?.username as string;
-
+  const { encode, decode } = require("gpt-3-encoder");
   //Return erro if missing env vars
   if (
     !process.env.TWITTER_BEARER_TOKEN ||
@@ -122,16 +122,15 @@ export const getStaticProps: GetStaticProps = async (context) => {
   }
 
   const tweets = [...tweets1.data, ...(tweets2.data ? tweets2.data : [])];
-  const tweetText = tweets
+  const tweetTextRaw = tweets
     .map((tweet) => tweet.text)
     .filter((text) => text.split(" ").length > 6)
     .join(" ")
     .replace(/(?:https?|ftp):\/\/[\n\S]+/g, "")
     .replaceAll("\n", " ")
-    .replaceAll("  ", " ")
-    .split(" ")
-    .slice(0, 2500)
-    .join(" ");
+    .replaceAll("  ", " ");
+  const encoded = encode(tweetTextRaw);
+  const tweetText = decode(encoded.slice(0, 3500));
   return {
     props: { realName, username, result: tweetText }, // will be passed to the page component as props
   };

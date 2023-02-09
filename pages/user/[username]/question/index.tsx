@@ -5,7 +5,7 @@ import { Client } from "twitter-api-sdk";
 import { text } from "stream/consumers";
 import { useRouter } from "next/router";
 import { HashLoader } from "react-spinners";
-import { authOptions } from "pages/api/auth/[...nextauth]";
+import { authOptions } from "@/pages/api/auth/[...nextauth]";
 import type { InferGetStaticPropsType, GetStaticProps } from "next";
 import { signIn, signOut, useSession } from "next-auth/react";
 import { useState } from "react";
@@ -51,13 +51,12 @@ export default function Question({
     if (tweetText && question.length > 5) {
       try {
         setIsLoadingAnalysis(true);
-        const res = await fetch("/api/tweets/analyze", {
+        const res = await fetch("/api/tweets/analyze/search", {
           method: "POST",
-          body: JSON.stringify({ tweetText, question }),
+          body: JSON.stringify({ question, username }),
         });
         const resJson = await res.json();
-        const result = resJson.data.analysis;
-        console.log(result);
+        const result = resJson.data?.analysis;
         setIsLoadingAnalysis(false);
         setAnalysis(result);
       } catch (error) {
@@ -181,10 +180,7 @@ export const getStaticProps: GetStaticProps = async (context) => {
     .join(" ")
     .replace(/(?:https?|ftp):\/\/[\n\S]+/g, "")
     .replaceAll("\n", " ")
-    .replaceAll("  ", " ")
-    .split(" ")
-    .slice(0, 2500)
-    .join(" ");
+    .replaceAll("  ", " ");
 
   const encoded = encode(tweetTextRaw);
   const tweetText = decode(encoded.slice(0, 3500));
