@@ -84,7 +84,7 @@ export default async function handler(
   try {
     const response = await openai.createCompletion({
       model: "text-davinci-003",
-      prompt: `Answer the provided question about a user, given their name and text of their tweets. You should speculate if you can't determine an answer.\nName:${realName}\nTweets: ${tweetText}.\nQuestion: ${question}\nAnswer:`,
+      prompt: `Answer the provided question about a user, given their name and text of their tweets. Explain your answer in detail and speculate if you can't determine an answer.\nName:${realName}\nTweets: ${tweetText}.\nQuestion: ${question}\nAnswer:`,
       temperature: 0.85,
       max_tokens: 300,
     });
