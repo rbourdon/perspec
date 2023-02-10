@@ -8,11 +8,12 @@ import { HashLoader } from "react-spinners";
 import { authOptions } from "pages/api/auth/[...nextauth]";
 import type { InferGetStaticPropsType, GetStaticProps } from "next";
 import { signIn, signOut, useSession } from "next-auth/react";
+import { getTweets, getTwitterId, tweetsToTokenText } from "@/lib/utils";
 
 const inter = Inter({ subsets: ["latin"] });
 
 export default function Tweets({
-  realName,
+  name,
   username,
   result,
 }: InferGetStaticPropsType<typeof getStaticProps>) {
@@ -53,11 +54,11 @@ export default function Tweets({
             Sign out
           </button>
         </div>
-        <div className="flex flex-col px-8 max-w-6xl flex-grow items-center justify-center">
+        <div className="flex flex-col px-8 max-w-6xl flex-grow pb-16 items-center justify-center">
           {!router.isFallback ? (
             <>
               <p className="font-bold text-4xl">{`@${username}`}</p>
-              <p className="text-md mt-1">{realName}</p>
+              <p className="text-md mt-1">{name}</p>
               <p className="mt-8 whitespace-pre-wrap">{result.trim()}</p>
             </>
           ) : (
@@ -82,57 +83,33 @@ export const getStaticProps: GetStaticProps = async (context) => {
   ) {
     return {
       props: {
-        realName: "Unknown",
+        name: "Unknown",
         username,
         result: "Environment Configuration Error",
       },
     };
   }
 
-  const client = new Client(process.env.TWITTER_BEARER_TOKEN);
+  const { name, id } = await getTwitterId(username);
 
-  const idResponse = await client.users.findUserByUsername(username);
-
-  if (!idResponse.data?.id || !idResponse.data?.name) {
+  if (!id || !name) {
     return {
-      props: { realName: "Unknown", username, result: "No user found" },
-    };
-  }
-  const realName = idResponse.data.name;
-
-  const tweets1 = await client.tweets.usersIdTweets(idResponse.data?.id, {
-    max_results: 100,
-    exclude: ["replies", "retweets"],
-  });
-
-  if (!tweets1?.meta?.oldest_id) {
-    return {
-      props: { realName, username, result: "Failed to load twitter metadata" },
+      props: { name: "Unknown", username, result: "No user found" },
+      revalidate: false,
     };
   }
 
-  const tweets2 = await client.tweets.usersIdTweets(idResponse.data?.id, {
-    max_results: 100,
-    until_id: tweets1.meta.oldest_id,
-    exclude: ["replies", "retweets"],
-  });
-
-  if (!tweets1?.data) {
-    return { props: { realName, username, result: "Failed to load tweets" } };
+  const tweets = await getTweets(2, id, true, true);
+  if (tweets.length === 0) {
+    return {
+      props: { name: name, username, result: "Couldn't retreieve any tweets" },
+      revalidate: false,
+    };
   }
 
-  const tweets = [...tweets1.data, ...(tweets2.data ? tweets2.data : [])];
-  const tweetTextRaw = tweets
-    .map((tweet) => tweet.text)
-    .filter((text) => text.split(" ").length > 6)
-    .join(" ")
-    .replace(/(?:https?|ftp):\/\/[\n\S]+/g, "")
-    .replaceAll("\n", " ")
-    .replaceAll("  ", " ");
-  const encoded = encode(tweetTextRaw);
-  const tweetText = decode(encoded.slice(0, 3500));
+  const tweetText = await tweetsToTokenText(tweets, 3500);
   return {
-    props: { realName, username, result: tweetText }, // will be passed to the page component as props
+    props: { name, username, result: tweetText }, // will be passed to the page component as props
   };
 };
 

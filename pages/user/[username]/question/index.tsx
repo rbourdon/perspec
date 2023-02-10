@@ -46,14 +46,20 @@ export default function Question({
     if (question.length > 5) {
       try {
         setIsLoadingAnalysis(true);
-        const res = await fetch("/api/tweets/analyze/search", {
+        const res = await fetch("/api/tweets/question", {
           method: "POST",
           body: JSON.stringify({ question, username, tweets: result }),
         });
-        const resJson = await res.json();
-        const analysisResult = resJson.data?.analysis;
+        if (res.ok) {
+          const resJson = await res.json();
+          const analysisResult = resJson.data?.analysis;
+          setAnalysis(analysisResult);
+        } else {
+          const analysisResult = setAnalysis(
+            "Sorry, we couldn't analyze this question. Please try again later."
+          );
+        }
         setIsLoadingAnalysis(false);
-        setAnalysis(analysisResult);
       } catch (error) {
         setIsLoadingAnalysis(false);
         setAnalysis(null);
@@ -116,7 +122,7 @@ export default function Question({
 
 export const getStaticProps: GetStaticProps = async (context) => {
   const username = context.params?.username as string;
-  const { encode, decode } = require("gpt-3-encoder");
+
   //Return erro if missing env vars
   if (
     !process.env.TWITTER_BEARER_TOKEN ||
@@ -129,10 +135,10 @@ export const getStaticProps: GetStaticProps = async (context) => {
         username,
         result: "Environment Configuration Error",
       },
+      revalidate: 60,
     };
   }
 
-  const client = new Client(process.env.TWITTER_BEARER_TOKEN);
   const { name, id } = await getTwitterId(username);
 
   if (!id || !name) {
@@ -140,11 +146,25 @@ export const getStaticProps: GetStaticProps = async (context) => {
       props: {
         name: "Unknown",
         username: "Invalid user",
+        result: "Failed to find user",
       },
+      revalidate: 60,
     };
   }
+
   //Get all tweets
   const tweets = await getTweets(1, id, true, true);
+
+  if (tweets.length == 0) {
+    return {
+      props: {
+        name: name,
+        username: "Invalid user",
+        result: "Failed to retrieve tweets",
+      },
+      revalidate: 60,
+    };
+  }
 
   return {
     props: {

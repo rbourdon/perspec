@@ -53,13 +53,22 @@ export default async function handler(
 
   //Search for key words from question
   const searchTerms: string = await getSearchTermsByQuestion(question);
+  if (searchTerms.length === 0) {
+    res.status(500).json({
+      status: "fail",
+      message: "Failed to extract search terms.",
+    });
+    return;
+  }
 
   //Search recent tweets for search terms
-  const tweets1 = await getRecentTweetsBySearch(id, searchTerms);
+  const searchTweets = await getRecentTweetsBySearch(id, searchTerms);
 
   //Make tweet text
-
-  const finalTweets = combineTweets(tweets1, [tweets]);
+  const finalTweets = combineTweets(
+    searchTweets.length === 0 ? tweets : searchTweets,
+    searchTweets.length === 0 ? undefined : [tweets]
+  );
   const tweetText = tweetsToTokenText(finalTweets, 3500);
 
   const answer = await answerQuestionAboutUser(
@@ -69,10 +78,11 @@ export default async function handler(
     question
   );
 
-  if (!answer || answer.length <= 10) {
+  if (answer.length === 0) {
     res.status(500).json({
       status: "fail",
-      message: "Failed to get analysis. Too many requests.",
+      message:
+        "Failed to get analysis. Likey Open AI API is overloaded or too many requests. Please try again after a few minutes.",
     });
     return;
   } else {

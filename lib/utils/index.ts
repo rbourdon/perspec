@@ -11,15 +11,18 @@ export async function getRecentTweetsBySearch(
   id: string,
   searchString: string
 ) {
-  const client = new Client(process.env.TWITTER_BEARER_TOKEN!);
-  const tweets = await client.tweets.tweetsRecentSearch({
-    query: `from:${id} (${searchString})`,
-    max_results: 100,
-  });
-
-  return (
-    tweets.data?.map((tweet) => ({ id: tweet.id, text: tweet.text })) ?? []
-  );
+  try {
+    const client = new Client(process.env.TWITTER_BEARER_TOKEN!);
+    const tweets = await client.tweets.tweetsRecentSearch({
+      query: `from:${id} (${searchString})`,
+      max_results: 100,
+    });
+    return (
+      tweets.data?.map((tweet) => ({ id: tweet.id, text: tweet.text })) ?? []
+    );
+  } catch (e) {
+    return [];
+  }
 }
 
 export async function getSearchTermsByQuestion(question: string) {
@@ -43,7 +46,7 @@ export async function getSearchTermsByQuestion(question: string) {
       .map((term: string) => `"${term.trim()}"`)
       .join(" OR ");
   } catch (e) {
-    return;
+    return "";
   }
 }
 
@@ -63,12 +66,41 @@ export async function answerQuestionAboutUser(
   try {
     const response = await openai.createCompletion({
       model: "text-davinci-003",
-      prompt: `Answer the provided question about a user, given their name, online handle, and text of their tweets. Explain your answer in detail and speculate if you can't determine an answer.\nName:${name}\nHandle:${username}\nTweets: ${tweetText}.\nQuestion: ${question}\nAnswer:`,
+      prompt: `Answer the provided question about a user, given their name, online handle, and text of their tweets. Explain your answer in detail and speculate if you can't determine an answer.\nName: ${name}\nHandle: ${username}\nTweets: ${tweetText}.\nQuestion: ${question}\nAnswer:`,
       temperature: 0.85,
       max_tokens: 300,
     });
     if (response.status === 429) {
-      return { analysis: "" };
+      return "";
+    }
+
+    return response.data.choices[0].text;
+  } catch (e) {
+    return "";
+  }
+}
+
+export async function analyzeUser(
+  name: string,
+  username: string,
+  tweetText: string
+) {
+  const { Configuration, OpenAIApi } = require("openai");
+
+  const configuration = new Configuration({
+    apiKey: process.env.OPENAI_API_KEY,
+  });
+  const openai = new OpenAIApi(configuration);
+
+  try {
+    const response = await openai.createCompletion({
+      model: "text-davinci-003",
+      prompt: `Provided a person's tweets, their handle, and their real name, act as a psychologist and describe the person in detail. Be specific and include a list of some of their personal values, interests and history.\nName: ${name}\nHandle: ${username}\nTweets: ${tweetText}.\nAnalysis:`,
+      temperature: 0.75,
+      max_tokens: 420,
+    });
+    if (response.status === 429) {
+      return "";
     }
 
     return response.data.choices[0].text;
@@ -82,20 +114,22 @@ export function combineTweets(
     id: string;
     text: string;
   }[],
-  additionalTweets: {
+  additionalTweets?: {
     id: string;
     text: string;
   }[][]
 ) {
   return [
     ...primaryTweets,
-    ...additionalTweets
-      .map((aTweets) =>
-        aTweets.filter(
-          (tweet) => !primaryTweets.map((t) => t.id).includes(tweet.id)
-        )
-      )
-      .flat(),
+    ...(additionalTweets
+      ? additionalTweets
+          .map((aTweets) =>
+            aTweets.filter(
+              (tweet) => !primaryTweets.map((t) => t.id).includes(tweet.id)
+            )
+          )
+          .flat()
+      : []),
   ];
 }
 
@@ -139,38 +173,42 @@ export async function getTweets(
     tweets: { id: string; text: string }[];
     oldest_id?: string;
   }[] = [];
-  await Promise.all(
-    Array(count)
-      .fill(0)
-      .map(async (_, i) => {
-        const someTweets = await client.tweets.usersIdTweets(
-          id,
-          i > 0 && tweetBatches[i - 1]?.oldest_id
-            ? {
-                until_id: tweetBatches[i - 1]?.oldest_id,
-                max_results: 100,
-                exclude: exclude,
-              }
-            : {
-                max_results: 100,
-                exclude: exclude,
-              }
-        );
-        if (someTweets.data) {
-          tweetBatches.push({
-            tweets: someTweets.data.map((tweet) => ({
-              id: tweet.id,
-              text: tweet.text,
-            })),
-            ...(someTweets.meta?.oldest_id && {
-              oldest_id: someTweets.meta.oldest_id,
-            }),
-          });
-        }
-        return someTweets;
-      })
-  );
-  const tweets = tweetBatches.map((batch) => batch.tweets).flat();
+  try {
+    await Promise.all(
+      Array(count)
+        .fill(0)
+        .map(async (_, i) => {
+          const someTweets = await client.tweets.usersIdTweets(
+            id,
+            i > 0 && tweetBatches[i - 1]?.oldest_id
+              ? {
+                  until_id: tweetBatches[i - 1]?.oldest_id,
+                  max_results: 100,
+                  exclude: exclude,
+                }
+              : {
+                  max_results: 100,
+                  exclude: exclude,
+                }
+          );
+          if (someTweets.data) {
+            tweetBatches.push({
+              tweets: someTweets.data.map((tweet) => ({
+                id: tweet.id,
+                text: tweet.text,
+              })),
+              ...(someTweets.meta?.oldest_id && {
+                oldest_id: someTweets.meta.oldest_id,
+              }),
+            });
+          }
+          return someTweets;
+        })
+    );
+    const tweets = tweetBatches.map((batch) => batch.tweets).flat();
 
-  return tweets;
+    return tweets;
+  } catch (e) {
+    return [];
+  }
 }

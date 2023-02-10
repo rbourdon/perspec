@@ -8,12 +8,17 @@ import { HashLoader } from "react-spinners";
 import { authOptions } from "pages/api/auth/[...nextauth]";
 import type { InferGetStaticPropsType, GetStaticProps } from "next";
 import { signIn, signOut, useSession } from "next-auth/react";
-import { getTweets, getTwitterId, tweetsToTokenText } from "@/lib/utils";
+import {
+  analyzeUser,
+  getTweets,
+  getTwitterId,
+  tweetsToTokenText,
+} from "@/lib/utils";
 
 const inter = Inter({ subsets: ["latin"] });
 
 export default function User({
-  realName,
+  name,
   username,
   result,
 }: InferGetStaticPropsType<typeof getStaticProps>) {
@@ -58,7 +63,7 @@ export default function User({
           {!router.isFallback ? (
             <>
               <p className="font-bold text-4xl">{`@${username}`}</p>
-              <p className="text-md mt-1">{realName}</p>
+              <p className="text-md mt-1">{name}</p>
               <p className="mt-8 whitespace-pre-wrap">{result.trim()}</p>
             </>
           ) : (
@@ -73,8 +78,7 @@ export default function User({
 }
 
 export const getStaticProps: GetStaticProps = async (context) => {
-  const username = context.params?.username as string;
-  const { Configuration, OpenAIApi } = require("openai");
+  const username = context.params?.username as string | undefined;
   //Return erro if missing env vars
   if (
     !process.env.TWITTER_BEARER_TOKEN ||
@@ -83,63 +87,48 @@ export const getStaticProps: GetStaticProps = async (context) => {
   ) {
     return {
       props: {
-        realName: "Unknown",
+        name: "Unknown",
         username,
         result: "Environment Configuration Error",
       },
     };
   }
 
-  const configuration = new Configuration({
-    apiKey: process.env.OPENAI_API_KEY,
-  });
-  const openai = new OpenAIApi(configuration);
-
   const { name, id } = await getTwitterId(username);
 
   if (!id || !name) {
     return {
-      props: { realName: "Unknown", username, result: "No user found" },
+      props: { name: "Unknown", username, result: "No user found" },
       revalidate: false,
     };
   }
-  const realName = name;
 
   const tweets = await getTweets(2, id, true, true);
-
-  const tweetText = await tweetsToTokenText(tweets, 3500);
-  try {
-    const response = await openai.createCompletion({
-      model: "text-davinci-003",
-      prompt: `Provided some tweets, act as a psychiatrist by describing the author in detail, including a list of some of their personal values and interests.\nTweets: ${tweetText}.\nAnalysis:`,
-      temperature: 0.75,
-      max_tokens: 400,
-    });
-    if (response.status === 429) {
-      return {
-        props: {
-          realName,
-          username,
-          result: `Failed to generate response. Too many requests, try again in a moment.`,
-        },
-        revalidate: 60,
-      };
-    }
-
+  if (tweets.length === 0) {
     return {
-      props: { realName, username, result: response.data.choices[0].text },
+      props: { name, username, result: "Couldn't retreieve any tweets" },
       revalidate: false,
     };
-  } catch (e) {
+  }
+  const tweetText = await tweetsToTokenText(tweets, 3500);
+  const analysis = await analyzeUser(name, username, tweetText);
+
+  if (analysis.length === 0) {
     return {
       props: {
-        realName,
+        name,
         username,
-        result: `Failed to generate response. ${e}`,
+        result:
+          "Failed to get analysis. Like Open AI API is overloaded or too many requests. Please try again after a few minutes.",
       },
-      revalidate: 60,
+      revalidate: false,
     };
   }
+
+  return {
+    props: { name, username, result: analysis },
+    revalidate: false,
+  };
 };
 
 export async function getStaticPaths() {
