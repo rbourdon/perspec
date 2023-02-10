@@ -8,6 +8,7 @@ import { HashLoader } from "react-spinners";
 import { authOptions } from "pages/api/auth/[...nextauth]";
 import type { InferGetStaticPropsType, GetStaticProps } from "next";
 import { signIn, signOut, useSession } from "next-auth/react";
+import { getTweets, getTwitterId, tweetsToTokenText } from "@/lib/utils";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -74,7 +75,6 @@ export default function User({
 export const getStaticProps: GetStaticProps = async (context) => {
   const username = context.params?.username as string;
   const { Configuration, OpenAIApi } = require("openai");
-  const { encode, decode } = require("gpt-3-encoder");
   //Return erro if missing env vars
   if (
     !process.env.TWITTER_BEARER_TOKEN ||
@@ -94,54 +94,20 @@ export const getStaticProps: GetStaticProps = async (context) => {
     apiKey: process.env.OPENAI_API_KEY,
   });
   const openai = new OpenAIApi(configuration);
-  const client = new Client(process.env.TWITTER_BEARER_TOKEN);
 
-  const idResponse = await client.users.findUserByUsername(username);
+  const { name, id } = await getTwitterId(username);
 
-  if (!idResponse.data?.id || !idResponse.data?.name) {
+  if (!id || !name) {
     return {
       props: { realName: "Unknown", username, result: "No user found" },
       revalidate: false,
     };
   }
-  const realName = idResponse.data.name;
+  const realName = name;
 
-  const tweets1 = await client.tweets.usersIdTweets(idResponse.data?.id, {
-    max_results: 100,
-    exclude: ["replies", "retweets"],
-  });
+  const tweets = await getTweets(2, id, true, true);
 
-  if (!tweets1?.meta?.oldest_id) {
-    return {
-      props: { realName, username, result: "Failed to load twitter metadata" },
-      revalidate: 60,
-    };
-  }
-
-  const tweets2 = await client.tweets.usersIdTweets(idResponse.data?.id, {
-    max_results: 100,
-    until_id: tweets1.meta.oldest_id,
-    exclude: ["replies", "retweets"],
-  });
-
-  if (!tweets1?.data) {
-    return {
-      props: { realName, username, result: "Failed to load tweets" },
-      revalidate: 60,
-    };
-  }
-
-  const tweets = [...tweets1.data, ...(tweets2.data ? tweets2.data : [])];
-  const tweetTextRaw = tweets
-    .map((tweet) => tweet.text)
-    .filter((text) => text.split(" ").length > 6)
-    .join(" ")
-    .replace(/(?:https?|ftp):\/\/[\n\S]+/g, "")
-    .replaceAll("\n", " ")
-    .replaceAll("  ", " ");
-
-  const encoded = encode(tweetTextRaw);
-  const tweetText = decode(encoded.slice(0, 3500));
+  const tweetText = await tweetsToTokenText(tweets, 3500);
   try {
     const response = await openai.createCompletion({
       model: "text-davinci-003",

@@ -9,11 +9,12 @@ import { authOptions } from "@/pages/api/auth/[...nextauth]";
 import type { InferGetStaticPropsType, GetStaticProps } from "next";
 import { signIn, signOut, useSession } from "next-auth/react";
 import { useState } from "react";
+import { getTweets, getTwitterId } from "@/lib/utils";
 
 const inter = Inter({ subsets: ["latin"] });
 
 export default function Question({
-  realName,
+  name,
   username,
   result,
 }: InferGetStaticPropsType<typeof getStaticProps>) {
@@ -56,7 +57,6 @@ export default function Question({
       } catch (error) {
         setIsLoadingAnalysis(false);
         setAnalysis(null);
-        console.log(error);
       }
     } else {
       setAnalysis(null);
@@ -81,7 +81,7 @@ export default function Question({
           {!router.isFallback ? (
             <>
               <p className="font-bold text-4xl">{`@${username}`}</p>
-              <p className="text-md mt-1">{realName}</p>
+              <p className="text-md mt-1">{name}</p>
               <input
                 type="text"
                 className="w-full max-w-xl mt-12 text-sm px-4 py-2 bg-black/10 rounded-full focus:outline-none"
@@ -91,7 +91,6 @@ export default function Question({
                     analyzeTweets({
                       question: e.currentTarget.value,
                     });
-                    e.currentTarget.value = "";
                   }
                 }}
               />
@@ -126,7 +125,7 @@ export const getStaticProps: GetStaticProps = async (context) => {
   ) {
     return {
       props: {
-        realName: "Unknown",
+        name: "Unknown",
         username,
         result: "Environment Configuration Error",
       },
@@ -134,32 +133,24 @@ export const getStaticProps: GetStaticProps = async (context) => {
   }
 
   const client = new Client(process.env.TWITTER_BEARER_TOKEN);
+  const { name, id } = await getTwitterId(username);
 
-  const idResponse = await client.users.findUserByUsername(username);
-
-  if (!idResponse.data?.id || !idResponse.data?.name) {
+  if (!id || !name) {
     return {
       props: {
-        realName: "Unknown",
+        name: "Unknown",
         username: "Invalid user",
       },
     };
   }
-  const realName = idResponse.data.name;
-
   //Get all tweets
-  const tweets = await client.tweets.usersIdTweets(idResponse.data?.id, {
-    max_results: 100,
-    exclude: ["replies", "retweets"],
-  });
+  const tweets = await getTweets(1, id, true, true);
 
   return {
     props: {
-      realName,
+      name,
       username,
-      result:
-        tweets?.data?.map((tweet) => ({ id: tweet.id, text: tweet.text })) ??
-        [],
+      result: tweets,
     },
     revalidate: false,
   };
