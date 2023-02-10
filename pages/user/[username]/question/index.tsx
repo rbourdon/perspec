@@ -41,24 +41,18 @@ export default function Question({
     );
   }
 
-  const analyzeTweets = async ({
-    tweetText,
-    question,
-  }: {
-    tweetText: string;
-    question: string;
-  }) => {
-    if (tweetText && question.length > 5) {
+  const analyzeTweets = async ({ question }: { question: string }) => {
+    if (question.length > 5) {
       try {
         setIsLoadingAnalysis(true);
         const res = await fetch("/api/tweets/analyze/search", {
           method: "POST",
-          body: JSON.stringify({ question, username }),
+          body: JSON.stringify({ question, username, tweets: result }),
         });
         const resJson = await res.json();
-        const result = resJson.data?.analysis;
+        const analysisResult = resJson.data?.analysis;
         setIsLoadingAnalysis(false);
-        setAnalysis(result);
+        setAnalysis(analysisResult);
       } catch (error) {
         setIsLoadingAnalysis(false);
         setAnalysis(null);
@@ -93,13 +87,11 @@ export default function Question({
                 className="w-full max-w-xl mt-12 text-sm px-4 py-2 bg-black/10 rounded-full focus:outline-none"
                 onKeyDown={(e) => {
                   if (e.key === "Enter") {
+                    setAnalysis(null);
                     analyzeTweets({
-                      tweetText: result,
                       question: e.currentTarget.value,
                     });
                     e.currentTarget.value = "";
-                  } else if (analysis) {
-                    setAnalysis(null);
                   }
                 }}
               />
@@ -147,45 +139,28 @@ export const getStaticProps: GetStaticProps = async (context) => {
 
   if (!idResponse.data?.id || !idResponse.data?.name) {
     return {
-      props: { realName: "Unknown", username, result: "No user found" },
+      props: {
+        realName: "Unknown",
+        username: "Invalid user",
+      },
     };
   }
   const realName = idResponse.data.name;
 
-  const tweets1 = await client.tweets.usersIdTweets(idResponse.data?.id, {
+  //Get all tweets
+  const tweets = await client.tweets.usersIdTweets(idResponse.data?.id, {
     max_results: 100,
     exclude: ["replies", "retweets"],
   });
 
-  if (!tweets1?.meta?.oldest_id) {
-    return {
-      props: { realName, username, result: "Failed to load twitter metadata" },
-    };
-  }
-
-  const tweets2 = await client.tweets.usersIdTweets(idResponse.data?.id, {
-    max_results: 100,
-    until_id: tweets1.meta.oldest_id,
-    exclude: ["replies", "retweets"],
-  });
-
-  if (!tweets1?.data) {
-    return { props: { realName, username, result: "Failed to load tweets" } };
-  }
-
-  const tweets = [...tweets1.data, ...(tweets2.data ? tweets2.data : [])];
-  const tweetTextRaw = tweets
-    .map((tweet) => tweet.text)
-    .filter((text) => text.split(" ").length > 6)
-    .join(" ")
-    .replace(/(?:https?|ftp):\/\/[\n\S]+/g, "")
-    .replaceAll("\n", " ")
-    .replaceAll("  ", " ");
-
-  const encoded = encode(tweetTextRaw);
-  const tweetText = decode(encoded.slice(0, 3500));
   return {
-    props: { realName, username, result: tweetText },
+    props: {
+      realName,
+      username,
+      result:
+        tweets?.data?.map((tweet) => ({ id: tweet.id, text: tweet.text })) ??
+        [],
+    },
     revalidate: false,
   };
 };
