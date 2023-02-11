@@ -33,7 +33,7 @@ export async function getTwitterUsers(query: string) {
       }
     );
     const json = await res.json();
-    console.log(json);
+
     return json;
   } catch (e) {
     console.error(e);
@@ -57,6 +57,54 @@ export async function getRecentTweetsBySearch(
     );
   } catch (e) {
     return [];
+  }
+}
+
+export async function convertToThird(question: string) {
+  try {
+    const res = await fetch("https://api.openai.com/v1/edits", {
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${process.env.OPENAI_API_KEY ?? ""}`,
+      },
+      method: "POST",
+      body: JSON.stringify({
+        model: "text-davinci-edit-001",
+        input: question,
+        instruction: `Convert this question to a third person question.`,
+        temperature: 0.1,
+      }),
+    });
+    const json = await res.json();
+
+    return json.choices[0].text;
+  } catch (e) {
+    console.error(e);
+    return "";
+  }
+}
+
+export async function convertToSecond(question: string) {
+  try {
+    const res = await fetch("https://api.openai.com/v1/edits", {
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${process.env.OPENAI_API_KEY ?? ""}`,
+      },
+      method: "POST",
+      body: JSON.stringify({
+        model: "text-davinci-edit-001",
+        input: question,
+        instruction: `Convert this question to a second person question.`,
+        temperature: 0.1,
+      }),
+    });
+    const json = await res.json();
+
+    return json.choices[0].text;
+  } catch (e) {
+    console.error(e);
+    return "";
   }
 }
 

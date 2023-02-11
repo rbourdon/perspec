@@ -5,6 +5,8 @@ import {
   answerQuestionAboutUser,
   answerQuestionAsUser,
   combineTweets,
+  convertToSecond,
+  convertToThird,
   getRecentTweetsBySearch,
   getSearchTermsByQuestion,
   getTwitterId,
@@ -86,18 +88,22 @@ export default async function handler(req: NextRequest) {
   );
   const tweetText = tweetsToTokenText(finalTweets, 3100);
 
+  const firstPersonQuestion = await convertToSecond(question);
+
   const answer = await answerQuestionAsUser(
     name,
     username,
     tweetText,
-    question
+    firstPersonQuestion
   );
+
+  const thirdPersonQuestion = await convertToThird(question);
 
   const analysis = await answerQuestionAboutUser(
     name,
     username,
     tweetText,
-    question
+    thirdPersonQuestion
   );
 
   if (answer.length === 0) {
