@@ -96,10 +96,10 @@ export const getStaticProps: GetStaticProps = async (context) => {
   if (tweets.length === 0) {
     return {
       props: { name, username, result: "Couldn't retreieve any tweets" },
-      revalidate: false,
+      revalidate: 60,
     };
   }
-  const tweetText = await tweetsToTokenText(tweets, 3500);
+  const tweetText = await tweetsToTokenText(tweets, 3400);
   const analysis = await analyzeUser(name, username, tweetText);
 
   if (analysis.length === 0) {
@@ -110,7 +110,7 @@ export const getStaticProps: GetStaticProps = async (context) => {
         result:
           "Failed to get analysis. Like Open AI API is overloaded or too many requests. Please try again after a few minutes.",
       },
-      revalidate: false,
+      revalidate: 60,
     };
   }
 

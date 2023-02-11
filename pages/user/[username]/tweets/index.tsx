@@ -90,7 +90,7 @@ export const getStaticProps: GetStaticProps = async (context) => {
   if (tweets.length === 0) {
     return {
       props: { name: name, username, result: "Couldn't retreieve any tweets" },
-      revalidate: false,
+      revalidate: 60,
     };
   }
 
