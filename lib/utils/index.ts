@@ -4,8 +4,15 @@ export async function getTwitterId(username: string) {
   const client = new Client(process.env.TWITTER_BEARER_TOKEN!);
   try {
     const parsedName = username.replace("@", "");
-    const idResponse = await client.users.findUserByUsername(parsedName);
-    return { id: idResponse.data?.id, name: idResponse.data?.name };
+    const idResponse = await client.users.findUserByUsername(parsedName, {
+      "user.fields": ["profile_image_url"],
+    });
+
+    return {
+      id: idResponse.data?.id,
+      name: idResponse.data?.name,
+      pic: idResponse.data?.profile_image_url?.replace("_normal", ""),
+    };
   } catch (e) {
     console.error(e);
     return { id: null, name: null };

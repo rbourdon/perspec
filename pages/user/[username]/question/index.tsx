@@ -16,6 +16,7 @@ const inter = Inter({ subsets: ["latin"] });
 export default function Question({
   name,
   username,
+  pic,
   result,
 }: InferGetStaticPropsType<typeof getStaticProps>) {
   const router = useRouter();
@@ -92,7 +93,18 @@ export default function Question({
         <div className="flex flex-col w-full px-8 max-w-6xl flex-grow items-center justify-center">
           {!router.isFallback ? (
             <>
-              <p className="font-bold text-4xl">{`@${username.replace(
+              {pic && (
+                <Image
+                  src={pic}
+                  width={150}
+                  height={150}
+                  priority
+                  quality={100}
+                  className="rounded-full"
+                  alt=""
+                />
+              )}
+              <p className="mt-1 font-bold text-4xl">{`@${username.replace(
                 "@",
                 ""
               )}`}</p>
@@ -148,19 +160,21 @@ export const getStaticProps: GetStaticProps = async (context) => {
       props: {
         name: "Unknown",
         username: "Invalid user",
+        pic: null,
         result: "Missing username",
       },
       revalidate: false,
     };
   }
 
-  const { name, id } = await getTwitterId(username);
+  const { name, id, pic } = await getTwitterId(username);
 
   if (!id || !name) {
     return {
       props: {
         name: "Unknown",
-        username: username,
+        username,
+        pic: null,
         result: "Failed to find user",
       },
       revalidate: false,
@@ -173,8 +187,9 @@ export const getStaticProps: GetStaticProps = async (context) => {
   if (tweets.length == 0) {
     return {
       props: {
-        name: name,
-        username: "Invalid user",
+        name,
+        username,
+        pic,
         result: "Failed to retrieve tweets",
       },
       revalidate: 60,
@@ -185,6 +200,7 @@ export const getStaticProps: GetStaticProps = async (context) => {
     props: {
       name,
       username,
+      pic: pic ?? null,
       result: tweets,
     },
     revalidate: false,

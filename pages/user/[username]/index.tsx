@@ -20,6 +20,7 @@ const inter = Inter({ subsets: ["latin"] });
 export default function User({
   name,
   username,
+  pic,
   result,
 }: InferGetStaticPropsType<typeof getStaticProps>) {
   const router = useRouter();
@@ -62,7 +63,18 @@ export default function User({
         <div className="flex flex-col px-8 max-w-6xl flex-grow items-center justify-center">
           {!router.isFallback ? (
             <>
-              <p className="font-bold text-4xl">{`@${username.replace(
+              {pic && (
+                <Image
+                  src={pic}
+                  width={150}
+                  height={150}
+                  priority
+                  quality={100}
+                  className="rounded-full"
+                  alt=""
+                />
+              )}
+              <p className="mt-1 font-bold text-4xl">{`@${username.replace(
                 "@",
                 ""
               )}`}</p>
@@ -85,16 +97,21 @@ export const getStaticProps: GetStaticProps = async (context) => {
 
   if (!username) {
     return {
-      props: { name: "Unknown", username: "Unknown", result: "No user found" },
+      props: {
+        name: "Unknown",
+        username: "Unknown",
+        pic: null,
+        result: "No user found",
+      },
       revalidate: false,
     };
   }
 
-  const { name, id } = await getTwitterId(username);
+  const { name, id, pic } = await getTwitterId(username);
 
   if (!id || !name) {
     return {
-      props: { name: "Unknown", username, result: "No user found" },
+      props: { name: "Unknown", username, pic: null, result: "No user found" },
       revalidate: false,
     };
   }
@@ -102,7 +119,7 @@ export const getStaticProps: GetStaticProps = async (context) => {
   const tweets = await getTweets(2, id, true, true);
   if (tweets.length === 0) {
     return {
-      props: { name, username, result: "Couldn't retreieve any tweets" },
+      props: { name, username, pic, result: "Couldn't retreieve any tweets" },
       revalidate: 60,
     };
   }
@@ -114,6 +131,7 @@ export const getStaticProps: GetStaticProps = async (context) => {
       props: {
         name,
         username,
+        pic,
         result:
           "Failed to get analysis. Like Open AI API is overloaded or too many requests. Please try again after a few minutes.",
       },
@@ -122,7 +140,7 @@ export const getStaticProps: GetStaticProps = async (context) => {
   }
 
   return {
-    props: { name, username, result: analysis },
+    props: { name, username, pic, result: analysis },
     revalidate: false,
   };
 };
