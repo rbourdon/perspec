@@ -96,13 +96,13 @@ export const getStaticProps: GetStaticProps = async (context) => {
 
   const tweetText = await tweetsToTokenText(tweets, 3500);
   return {
-    props: { name, username, result: tweetText }, // will be passed to the page component as props
+    props: { name, username, result: tweetText },
   };
 };
 
 export async function getStaticPaths() {
   return {
     paths: [{ params: { username: "elonmusk" } }],
-    fallback: true, // can also be true or 'blocking'
+    fallback: true,
   };
 }

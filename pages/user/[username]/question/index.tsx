@@ -124,7 +124,18 @@ export default function Question({
 }
 
 export const getStaticProps: GetStaticProps = async (context) => {
-  const username = context.params?.username as string;
+  const username = context.params?.username as string | undefined;
+
+  if (!username) {
+    return {
+      props: {
+        name: "Unknown",
+        username: "Invalid user",
+        result: "Missing username",
+      },
+      revalidate: false,
+    };
+  }
 
   const { name, id } = await getTwitterId(username);
 
@@ -132,10 +143,10 @@ export const getStaticProps: GetStaticProps = async (context) => {
     return {
       props: {
         name: "Unknown",
-        username: "Invalid user",
+        username: username,
         result: "Failed to find user",
       },
-      revalidate: 60,
+      revalidate: false,
     };
   }
 
@@ -166,6 +177,6 @@ export const getStaticProps: GetStaticProps = async (context) => {
 export async function getStaticPaths() {
   return {
     paths: [{ params: { username: "elonmusk" } }],
-    fallback: true, // can also be true or 'blocking'
+    fallback: true,
   };
 }
