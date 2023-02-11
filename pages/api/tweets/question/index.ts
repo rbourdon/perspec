@@ -1,6 +1,6 @@
-import { NextApiRequest, NextApiResponse } from "next";
-import { getServerSession } from "next-auth/next";
-import { authOptions } from "@/pages/api/auth/[...nextauth]";
+import { NextRequest, NextResponse } from "next/server";
+//import { getServerSession } from "next-auth/next";
+//import { authOptions } from "@/pages/api/auth/[...nextauth]";
 import {
   answerQuestionAboutUser,
   combineTweets,
@@ -10,22 +10,18 @@ import {
   tweetsToTokenText,
 } from "@/lib/utils";
 
-export default async function handler(
-  req: NextApiRequest,
-  res: NextApiResponse
-) {
-  const { question, username, tweets } = JSON.parse(req.body) as {
+export const config = {
+  runtime: "edge",
+};
+
+export default async function handler(req: NextRequest) {
+  const { question, username, tweets } = (await req.json()) as {
     username: string | null | undefined;
     question: string | null | undefined;
     tweets: { id: string; text: string }[] | null | undefined;
   };
-  const session = await getServerSession(req, res, authOptions);
-  if (!session) {
-    res.status(401).json({ status: "fail", message: "You must be logged in." });
-    return;
-  }
 
-  //Return erro if missing env vars
+  //Return error if missing env vars
   if (
     !process.env.TWITTER_BEARER_TOKEN ||
     !process.env.OPENAI_API_KEY ||
@@ -33,32 +29,41 @@ export default async function handler(
     !question ||
     !tweets
   ) {
-    res
-      .status(500)
-      .json({ status: "fail", message: "Environment Configuration Error" });
-    return;
+    return new Response(
+      JSON.stringify({
+        status: "fail",
+        message: "Environment Configuration Error",
+      })
+    );
   }
 
   const { id, name } = await getTwitterId(username);
 
   if (!id || !name) {
-    res.status(500).json({ status: "fail", message: "Invalid user" });
-    return;
+    return new Response(
+      JSON.stringify({ status: "fail", message: "Invalid user" })
+    );
   }
 
   if (!tweets) {
-    res.status(500).json({ status: "fail", message: "Please provide tweets" });
-    return;
+    return new Response(
+      JSON.stringify({ status: "fail", message: "Please provide tweets" })
+    );
   }
 
   //Search for key words from question
   const searchTerms: string = await getSearchTermsByQuestion(question);
+
   if (searchTerms.length === 0) {
-    res.status(500).json({
-      status: "fail",
-      message: "Failed to extract search terms.",
-    });
-    return;
+    return new Response(
+      JSON.stringify({
+        status: "fail",
+        message: "Failed to extract search terms.",
+        data: {
+          analysis: "Failed to extract search terms.",
+        },
+      })
+    );
   }
 
   //Search recent tweets for search terms
@@ -79,17 +84,22 @@ export default async function handler(
   );
 
   if (answer.length === 0) {
-    res.status(500).json({
-      status: "fail",
-      message:
-        "Failed to get analysis. Likey Open AI API is overloaded or too many requests. Please try again after a few minutes.",
-    });
-    return;
-  } else {
-    res.status(200).json({
+    return new Response(
+      JSON.stringify({
+        status: "fail",
+        message:
+          "Failed to get analysis. Likey Open AI API is overloaded or too many requests. Please try again after a few minutes.",
+        data: {
+          analysis:
+            "Failed to get analysis. Likey Open AI API is overloaded or too many requests. Please try again after a few minutes.",
+        },
+      })
+    );
+  }
+  return new Response(
+    JSON.stringify({
       status: "success",
       data: { analysis: answer },
-    });
-    return;
-  }
+    })
+  );
 }

@@ -26,26 +26,28 @@ export async function getRecentTweetsBySearch(
 }
 
 export async function getSearchTermsByQuestion(question: string) {
-  const { Configuration, OpenAIApi } = require("openai");
-
-  const configuration = new Configuration({
-    apiKey: process.env.OPENAI_API_KEY,
-  });
-  const openai = new OpenAIApi(configuration);
-
   try {
-    const response = await openai.createCompletion({
-      model: "text-curie-001",
-      prompt: `List several search terms, separated by commas, from this question: ${question}`,
-      temperature: 0.5,
-      max_tokens: 50,
+    const res = await fetch("https://api.openai.com/v1/completions", {
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${process.env.OPENAI_API_KEY ?? ""}`,
+      },
+      method: "POST",
+      body: JSON.stringify({
+        model: "text-curie-001",
+        prompt: `List several search terms, separated by commas, from this question: ${question}`,
+        temperature: 0.5,
+        max_tokens: 50,
+      }),
     });
+    const json = await res.json();
 
-    return response.data.choices[0].text
+    return json.choices[0].text
       .split(",")
       .map((term: string) => `"${term.trim()}"`)
       .join(" OR ");
   } catch (e) {
+    console.error(e);
     return "";
   }
 }
@@ -56,25 +58,23 @@ export async function answerQuestionAboutUser(
   tweetText: string,
   question: string
 ) {
-  const { Configuration, OpenAIApi } = require("openai");
-
-  const configuration = new Configuration({
-    apiKey: process.env.OPENAI_API_KEY,
-  });
-  const openai = new OpenAIApi(configuration);
-
   try {
-    const response = await openai.createCompletion({
-      model: "text-davinci-003",
-      prompt: `Answer the provided question about a user, given their name, online handle, and text of their tweets. Explain your answer in detail and speculate if you can't determine an answer.\nName: ${name}\nHandle: ${username}\nTweets: ${tweetText}.\nQuestion: ${question}\nAnswer:`,
-      temperature: 0.85,
-      max_tokens: 300,
+    const res = await fetch("https://api.openai.com/v1/completions", {
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${process.env.OPENAI_API_KEY ?? ""}`,
+      },
+      method: "POST",
+      body: JSON.stringify({
+        model: "text-davinci-003",
+        prompt: `Answer the provided question about a user, given their name, online handle, and text of their tweets. Explain your answer in detail and speculate if you can't determine an answer.\nName: ${name}\nHandle: ${username}\nTweets: ${tweetText}.\nQuestion: ${question}\nAnswer:`,
+        temperature: 0.85,
+        max_tokens: 300,
+      }),
     });
-    if (response.status === 429) {
-      return "";
-    }
+    const json = await res.json();
 
-    return response.data.choices[0].text;
+    return json.choices[0].text;
   } catch (e) {
     return "";
   }
@@ -140,17 +140,18 @@ export function tweetsToTokenText(
   }[],
   tokenLimit: number
 ) {
-  const { encode, decode } = require("gpt-3-encoder");
-  const tweetTextRaw = tweets
+  // const { encode, decode } = require("gpt-3-encoder");
+  const tweetText = tweets
     .map((tweet) => tweet.text)
     .filter((text) => text.split(" ").length > 6)
     .join(" ")
     .replace(/(?:https?|ftp):\/\/[\n\S]+/g, "")
     .replaceAll("\n", " ")
-    .replaceAll("  ", " ");
+    .replaceAll("  ", " ")
+    .split(" ")
+    .slice(0, tokenLimit * 0.75)
+    .join(" ");
 
-  const encoded = encode(tweetTextRaw);
-  const tweetText = decode(encoded.slice(0, tokenLimit));
   return tweetText;
 }
 
