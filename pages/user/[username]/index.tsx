@@ -27,7 +27,7 @@ export default function User({
 
   if (status === "loading") {
     return (
-      <main className="flex flex-col items-center min-h-screen">
+      <main className="flex flex-col items-center justify-center min-h-screen">
         <p>Loading...</p>
       </main>
     );
@@ -106,7 +106,7 @@ export const getStaticProps: GetStaticProps = async (context) => {
       revalidate: 60,
     };
   }
-  const tweetText = await tweetsToTokenText(tweets, 3400);
+  const tweetText = await tweetsToTokenText(tweets, 3300);
   const analysis = await analyzeUser(name, username, tweetText);
 
   if (analysis.length === 0) {

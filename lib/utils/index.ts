@@ -12,6 +12,41 @@ export async function getTwitterId(username: string) {
   }
 }
 
+export async function getTwitterUsers(query: string) {
+  // const client = new Client(process.env.TWITTER_BEARER_TOKEN!);
+  // try {
+  //   const parsedName = query.replace("@", "").replaceAll(" ", "_");
+  //   const idResponse = await client.users.findUsersByUsername({
+  //     usernames: [parsedName],
+  //   });
+  //   console.log(idResponse.data?.map((r) => ({ id: r.id, name: r.name })));
+  //   return idResponse.data?.map((r) => ({ id: r.id, name: r.name }));
+  // } catch (e) {
+  //   console.error(e);
+  //   return { id: null, name: null };
+  // }
+
+  const parsedName = query.replace("@", "");
+
+  try {
+    const res = await fetch(
+      `https://api.twitter.com/1.1/users/search.json?q=${parsedName}`,
+      {
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${process.env.TWITTER_BEARER_TOKEN}`,
+        },
+      }
+    );
+    const json = await res.json();
+    console.log(json);
+    return json;
+  } catch (e) {
+    console.error(e);
+    return "";
+  }
+}
+
 export async function getRecentTweetsBySearch(
   id: string,
   searchString: string
@@ -40,7 +75,7 @@ export async function getSearchTermsByQuestion(question: string) {
       method: "POST",
       body: JSON.stringify({
         model: "text-curie-001",
-        prompt: `List several search terms, separated by commas, from this question: ${question}`,
+        prompt: `List several search terms, separated by commas, from the following question.\n\nQuestion: ${question}\n\nSearch Terms:`,
         temperature: 0.5,
         max_tokens: 50,
       }),
@@ -72,9 +107,9 @@ export async function answerQuestionAboutUser(
       method: "POST",
       body: JSON.stringify({
         model: "text-davinci-003",
-        prompt: `Answer the provided question about a user, given their name, online handle, and text of their tweets. Explain your answer in detail and speculate if you can't determine an answer.\nName: ${name}\nHandle: ${username}\nTweets: ${tweetText}.\nQuestion: ${question}\nAnswer:`,
-        temperature: 0.75,
-        max_tokens: 200,
+        prompt: `Read these user details, including their name, handle, and tweets, and then answer the following question, speculating if needed. Explain your answer.\n\n"""\nName: ${name}\nHandle: ${username}\nTweets: ${tweetText}.\n"""\n\nQuestion: ${question}\n\nAnswer:`,
+        temperature: 0.4,
+        max_tokens: 150,
       }),
     });
     const json = await res.json();
@@ -99,7 +134,7 @@ export async function analyzeUser(
       method: "POST",
       body: JSON.stringify({
         model: "text-davinci-003",
-        prompt: `Provided a person's tweets, their handle, and their real name, act as a psychologist and describe the person. Make sure to talk about both their success and failures. Be specific and speculate.\nName: ${name}\nHandle: ${username}\nTweets: ${tweetText}.\nAnalysis:`,
+        prompt: `Provided a person's tweets, their handle, and their real name, act as a psychologist and describe the person. Make sure to talk about both their success and failures. Be specific and speculate.\n\n"""\nName: ${name}\nHandle: ${username}\nTweets: ${tweetText}.\n"""\n\nAnalysis:`,
         temperature: 1,
         presence_penalty: 0.3,
         frequency_penalty: 0.1,
@@ -150,17 +185,22 @@ export function tweetsToTokenText(
   tokenLimit: number
 ) {
   const tweetText = tweets
-    .map((tweet) => tweet.text)
-    .filter((text) => text.split(" ").length > 6)
-    .join(" ")
-    .replace(/(?:https?|ftp):\/\/[\n\S]+/g, "")
-    .replaceAll("\n", " ")
-    .replaceAll("  ", " ")
+    .map((tweet) =>
+      tweet.text
+        .replace(/(?:https?|ftp):\/\/[\n\S]+/g, "")
+        .replace(new RegExp("[\u1000-\uFFFF]+", "g"), "")
+        .replaceAll("�", "")
+        .replaceAll("  ", " ")
+        .replaceAll("\n\n", "\n")
+        .trim()
+    )
+    .filter((text) => text.split(" ").length > 5)
+    .map((text) => (text[0] === "-" ? text.slice(1) : text))
+    .join("\n")
     .split(" ")
-    .slice(0, tokenLimit * 0.75)
-    .join(" ");
+    .slice(0, tokenLimit * 0.75);
 
-  return tweetText;
+  return tweetText.join(" ");
 }
 
 export async function getTweets(

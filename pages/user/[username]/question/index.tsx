@@ -24,7 +24,7 @@ export default function Question({
   const [isLoadingAnalysis, setIsLoadingAnalysis] = useState(false);
   if (status === "loading") {
     return (
-      <main className="flex flex-col items-center min-h-screen">
+      <main className="flex flex-col items-center justify-center min-h-screen">
         <p>Loading...</p>
       </main>
     );
