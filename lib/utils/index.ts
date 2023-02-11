@@ -20,19 +20,6 @@ export async function getTwitterId(username: string) {
 }
 
 export async function getTwitterUsers(query: string) {
-  // const client = new Client(process.env.TWITTER_BEARER_TOKEN!);
-  // try {
-  //   const parsedName = query.replace("@", "").replaceAll(" ", "_");
-  //   const idResponse = await client.users.findUsersByUsername({
-  //     usernames: [parsedName],
-  //   });
-  //   console.log(idResponse.data?.map((r) => ({ id: r.id, name: r.name })));
-  //   return idResponse.data?.map((r) => ({ id: r.id, name: r.name }));
-  // } catch (e) {
-  //   console.error(e);
-  //   return { id: null, name: null };
-  // }
-
   const parsedName = query.replace("@", "");
 
   try {
@@ -84,7 +71,7 @@ export async function getSearchTermsByQuestion(question: string) {
       body: JSON.stringify({
         model: "text-curie-001",
         prompt: `List several search terms, separated by commas, based on the following question.\n\nQuestion: ${question}\n\nSearch Terms:`,
-        temperature: 0.5,
+        temperature: 0.2,
         max_tokens: 50,
         best_of: 2,
       }),
