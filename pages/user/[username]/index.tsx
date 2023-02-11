@@ -62,7 +62,10 @@ export default function User({
         <div className="flex flex-col px-8 max-w-6xl flex-grow items-center justify-center">
           {!router.isFallback ? (
             <>
-              <p className="font-bold text-4xl">{`@${username}`}</p>
+              <p className="font-bold text-4xl">{`@${username.replace(
+                "@",
+                ""
+              )}`}</p>
               <p className="text-md mt-1">{name}</p>
               <p className="mt-8 whitespace-pre-wrap">{result.trim()}</p>
             </>
@@ -79,20 +82,6 @@ export default function User({
 
 export const getStaticProps: GetStaticProps = async (context) => {
   const username = context.params?.username as string | undefined;
-  //Return erro if missing env vars
-  if (
-    !process.env.TWITTER_BEARER_TOKEN ||
-    !process.env.OPENAI_API_KEY ||
-    !username
-  ) {
-    return {
-      props: {
-        name: "Unknown",
-        username,
-        result: "Environment Configuration Error",
-      },
-    };
-  }
 
   const { name, id } = await getTwitterId(username);
 

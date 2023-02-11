@@ -2,9 +2,14 @@ import { Client } from "twitter-api-sdk";
 
 export async function getTwitterId(username: string) {
   const client = new Client(process.env.TWITTER_BEARER_TOKEN!);
-  const idResponse = await client.users.findUserByUsername(username);
-
-  return { id: idResponse.data?.id, name: idResponse.data?.name };
+  try {
+    const parsedName = username.replace("@", "");
+    const idResponse = await client.users.findUserByUsername(parsedName);
+    return { id: idResponse.data?.id, name: idResponse.data?.name };
+  } catch (e) {
+    console.error(e);
+    return { id: null, name: null };
+  }
 }
 
 export async function getRecentTweetsBySearch(
@@ -85,25 +90,27 @@ export async function analyzeUser(
   username: string,
   tweetText: string
 ) {
-  const { Configuration, OpenAIApi } = require("openai");
-
-  const configuration = new Configuration({
-    apiKey: process.env.OPENAI_API_KEY,
-  });
-  const openai = new OpenAIApi(configuration);
-
   try {
-    const response = await openai.createCompletion({
-      model: "text-davinci-003",
-      prompt: `Provided a person's tweets, their handle, and their real name, act as a psychologist and describe the person in detail. Be specific and include a list of some of their personal values, interests and history.\nName: ${name}\nHandle: ${username}\nTweets: ${tweetText}.\nAnalysis:`,
-      temperature: 0.75,
-      max_tokens: 420,
+    const res = await fetch("https://api.openai.com/v1/completions", {
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${process.env.OPENAI_API_KEY ?? ""}`,
+      },
+      method: "POST",
+      body: JSON.stringify({
+        model: "text-davinci-003",
+        prompt: `Provided a person's tweets, their handle, and their real name, act as a psychologist and describe the person in detail. Be specific and include a list of some of their personal values, interests and history.\nName: ${name}\nHandle: ${username}\nTweets: ${tweetText}.\nAnalysis:`,
+        temperature: 0.75,
+        max_tokens: 350,
+      }),
     });
-    if (response.status === 429) {
-      return "";
+    if (res.ok) {
+      const json = await res.json();
+      return json.choices[0].text;
+    } else {
+      console.log(res.status, res.statusText);
+      return "Failed to get user analysis";
     }
-
-    return response.data.choices[0].text;
   } catch (e) {
     return "";
   }
@@ -140,7 +147,6 @@ export function tweetsToTokenText(
   }[],
   tokenLimit: number
 ) {
-  // const { encode, decode } = require("gpt-3-encoder");
   const tweetText = tweets
     .map((tweet) => tweet.text)
     .filter((text) => text.split(" ").length > 6)

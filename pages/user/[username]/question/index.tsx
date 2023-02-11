@@ -86,7 +86,10 @@ export default function Question({
         <div className="flex flex-col w-full px-8 max-w-6xl flex-grow items-center justify-center">
           {!router.isFallback ? (
             <>
-              <p className="font-bold text-4xl">{`@${username}`}</p>
+              <p className="font-bold text-4xl">{`@${username.replace(
+                "@",
+                ""
+              )}`}</p>
               <p className="text-md mt-1">{name}</p>
               <input
                 type="text"
@@ -122,22 +125,6 @@ export default function Question({
 
 export const getStaticProps: GetStaticProps = async (context) => {
   const username = context.params?.username as string;
-
-  //Return erro if missing env vars
-  if (
-    !process.env.TWITTER_BEARER_TOKEN ||
-    !process.env.OPENAI_API_KEY ||
-    !username
-  ) {
-    return {
-      props: {
-        name: "Unknown",
-        username,
-        result: "Environment Configuration Error",
-      },
-      revalidate: 60,
-    };
-  }
 
   const { name, id } = await getTwitterId(username);
 

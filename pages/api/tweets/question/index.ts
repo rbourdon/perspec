@@ -22,17 +22,20 @@ export default async function handler(req: NextRequest) {
   };
 
   //Return error if missing env vars
-  if (
-    !process.env.TWITTER_BEARER_TOKEN ||
-    !process.env.OPENAI_API_KEY ||
-    !username ||
-    !question ||
-    !tweets
-  ) {
+  if (!process.env.TWITTER_BEARER_TOKEN || !process.env.OPENAI_API_KEY) {
     return new Response(
       JSON.stringify({
         status: "fail",
         message: "Environment Configuration Error",
+      })
+    );
+  }
+
+  if (!username || !question || !tweets) {
+    return new Response(
+      JSON.stringify({
+        status: "fail",
+        message: "Missing required parameters",
       })
     );
   }
