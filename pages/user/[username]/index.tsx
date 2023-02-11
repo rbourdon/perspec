@@ -106,7 +106,7 @@ export const getStaticProps: GetStaticProps = async (context) => {
       revalidate: 60,
     };
   }
-  const tweetText = await tweetsToTokenText(tweets, 3300);
+  const tweetText = await tweetsToTokenText(tweets, 3000);
   const analysis = await analyzeUser(name, username, tweetText);
 
   if (analysis.length === 0) {
