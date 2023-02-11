@@ -57,6 +57,7 @@ export async function getRecentTweetsBySearch(
       query: `from:${id} (${searchString})`,
       max_results: 100,
     });
+
     return (
       tweets.data?.map((tweet) => ({ id: tweet.id, text: tweet.text })) ?? []
     );
@@ -75,15 +76,21 @@ export async function getSearchTermsByQuestion(question: string) {
       method: "POST",
       body: JSON.stringify({
         model: "text-curie-001",
-        prompt: `List several search terms, separated by commas, from the following question.\n\nQuestion: ${question}\n\nSearch Terms:`,
+        prompt: `List several search terms, separated by commas, based on the following question.\n\nQuestion: ${question}\n\nSearch Terms:`,
         temperature: 0.5,
         max_tokens: 50,
+        best_of: 2,
       }),
     });
     const json = await res.json();
 
     return json.choices[0].text
+      .replaceAll("\n\n", ",")
+      .replaceAll("\n", ",")
+      .replaceAll(",,", ",")
+      .replaceAll('"', "")
       .split(",")
+      .filter((term: string) => term.length > 1)
       .map((term: string) => `"${term.trim()}"`)
       .join(" OR ");
   } catch (e) {
@@ -107,15 +114,44 @@ export async function answerQuestionAboutUser(
       method: "POST",
       body: JSON.stringify({
         model: "text-davinci-003",
-        prompt: `Read these user details, including their name, handle, and tweets, and then answer the following question, speculating if needed. Explain your answer.\n\n"""\nName: ${name}\nHandle: ${username}\nTweets: ${tweetText}.\n"""\n\nQuestion: ${question}\n\nAnswer:`,
+        prompt: `Read the following user details, including real name and tweets, and then answer the following question about the user in the tone of a psychologist. Explain your answer. If it isn't possible to answer based on the tweets, you should speculate.\n\n"""\nName: ${name}\nTweets: ${tweetText}.\n"""\n\nQuestion: ${question}\n\nAnswer:`,
         temperature: 0.4,
-        max_tokens: 150,
+        max_tokens: 200,
       }),
     });
     const json = await res.json();
 
     return json.choices[0].text;
   } catch (e) {
+    console.error(e);
+    return "";
+  }
+}
+
+export async function answerQuestionAsUser(
+  name: string,
+  username: string,
+  tweetText: string,
+  question: string
+) {
+  try {
+    const res = await fetch("https://api.openai.com/v1/completions", {
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${process.env.OPENAI_API_KEY ?? ""}`,
+      },
+      method: "POST",
+      body: JSON.stringify({
+        model: "text-davinci-003",
+        prompt: `"""\n${tweetText}\n"""\n\nThe above text is a list of tweets made by ${name}. Using the tweets, pretend to be this person and answer the following question in their speaking style and language.\n\nQuestion: ${question}\n\nAnswer:`,
+        temperature: 0.6,
+        max_tokens: 150,
+      }),
+    });
+    const json = await res.json();
+    return json.choices[0].text;
+  } catch (e) {
+    console.error(e);
     return "";
   }
 }

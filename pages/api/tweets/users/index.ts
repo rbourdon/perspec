@@ -1,15 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-//import { getServerSession } from "next-auth/next";
-//import { authOptions } from "@/pages/api/auth/[...nextauth]";
-import {
-  answerQuestionAboutUser,
-  combineTweets,
-  getRecentTweetsBySearch,
-  getSearchTermsByQuestion,
-  getTwitterId,
-  getTwitterUsers,
-  tweetsToTokenText,
-} from "@/lib/utils";
+import { getTwitterUsers } from "@/lib/utils";
 
 export const config = {
   runtime: "edge",

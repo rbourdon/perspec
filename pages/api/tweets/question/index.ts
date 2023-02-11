@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from "next/server";
 //import { authOptions } from "@/pages/api/auth/[...nextauth]";
 import {
   answerQuestionAboutUser,
+  answerQuestionAsUser,
   combineTweets,
   getRecentTweetsBySearch,
   getSearchTermsByQuestion,
@@ -80,12 +81,19 @@ export default async function handler(req: NextRequest) {
 
   //Make tweet text
   const finalTweets = combineTweets(
-    searchTweets.length === 0 ? tweets : searchTweets,
-    searchTweets.length === 0 ? undefined : [tweets]
+    !searchTweets || searchTweets.length === 0 ? tweets : searchTweets,
+    !searchTweets || searchTweets.length === 0 ? undefined : [tweets]
   );
-  const tweetText = tweetsToTokenText(finalTweets, 3400);
+  const tweetText = tweetsToTokenText(finalTweets, 3100);
 
-  const answer = await answerQuestionAboutUser(
+  const answer = await answerQuestionAsUser(
+    name,
+    username,
+    tweetText,
+    question
+  );
+
+  const analysis = await answerQuestionAboutUser(
     name,
     username,
     tweetText,
@@ -109,7 +117,7 @@ export default async function handler(req: NextRequest) {
     JSON.stringify({
       status: "success",
       message: "Successfully analyzed tweets.",
-      data: { analysis: answer },
+      data: { answer, analysis },
     })
   );
 }

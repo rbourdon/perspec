@@ -20,7 +20,10 @@ export default function Question({
 }: InferGetStaticPropsType<typeof getStaticProps>) {
   const router = useRouter();
   const { data: session, status } = useSession();
-  const [analysis, setAnalysis] = useState<string | null>(null);
+  const [aiResponse, setAiResponse] = useState<{
+    answer: string;
+    analysis: string;
+  } | null>(null);
   const [isLoadingAnalysis, setIsLoadingAnalysis] = useState(false);
   if (status === "loading") {
     return (
@@ -42,7 +45,7 @@ export default function Question({
     );
   }
 
-  const analyzeTweets = async ({ question }: { question: string }) => {
+  const analyzeTweets = async (question: string) => {
     if (question.length > 5) {
       try {
         setIsLoadingAnalysis(true);
@@ -52,20 +55,23 @@ export default function Question({
         });
         if (res.ok) {
           const resJson = await res.json();
-          const analysisResult = resJson.data?.analysis;
-          setAnalysis(analysisResult);
+          const analysisResult = resJson.data;
+          setAiResponse(analysisResult);
         } else {
-          const analysisResult = setAnalysis(
-            "Sorry, we couldn't analyze this question. Please try again later."
-          );
+          const analysisResult = setAiResponse({
+            answer:
+              "Sorry, we couldn't analyze this question. Please try again later.",
+            analysis:
+              "Sorry, we couldn't analyze this question. Please try again later.",
+          });
         }
         setIsLoadingAnalysis(false);
       } catch (error) {
         setIsLoadingAnalysis(false);
-        setAnalysis(null);
+        setAiResponse(null);
       }
     } else {
-      setAnalysis(null);
+      setAiResponse(null);
     }
   };
 
@@ -96,10 +102,8 @@ export default function Question({
                 className="w-full max-w-xl mt-12 text-sm px-4 py-2 bg-black/10 rounded-full focus:outline-none"
                 onKeyDown={(e) => {
                   if (e.key === "Enter") {
-                    setAnalysis(null);
-                    analyzeTweets({
-                      question: e.currentTarget.value,
-                    });
+                    setAiResponse(null);
+                    analyzeTweets(e.currentTarget.value);
                   }
                 }}
               />
@@ -108,9 +112,22 @@ export default function Question({
                   <HashLoader size={50} />
                 </div>
               )}
-              <p className="mt-8 whitespace-pre-wrap">
-                {analysis && analysis.trim()}
-              </p>
+              {aiResponse && (
+                <>
+                  <p className="w-full mt-8 font-bold text-lg">{name}:</p>
+                  <p className="whitespace-pre-wrap leading-5 w-full">
+                    {aiResponse.answer.trim()}
+                  </p>
+                </>
+              )}
+              {aiResponse && (
+                <>
+                  <p className="w-full mt-8 font-bold text-lg">AI:</p>
+                  <p className="w-full whitespace-pre-wrap leading-5">
+                    {aiResponse.analysis.trim()}
+                  </p>
+                </>
+              )}
             </>
           ) : (
             <div className="flex items-center h-full justify-center">
