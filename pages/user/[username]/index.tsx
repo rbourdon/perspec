@@ -83,6 +83,13 @@ export default function User({
 export const getStaticProps: GetStaticProps = async (context) => {
   const username = context.params?.username as string | undefined;
 
+  if (!username) {
+    return {
+      props: { name: "Unknown", username: "Unknown", result: "No user found" },
+      revalidate: false,
+    };
+  }
+
   const { name, id } = await getTwitterId(username);
 
   if (!id || !name) {
