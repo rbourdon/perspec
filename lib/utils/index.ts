@@ -73,8 +73,8 @@ export async function answerQuestionAboutUser(
       body: JSON.stringify({
         model: "text-davinci-003",
         prompt: `Answer the provided question about a user, given their name, online handle, and text of their tweets. Explain your answer in detail and speculate if you can't determine an answer.\nName: ${name}\nHandle: ${username}\nTweets: ${tweetText}.\nQuestion: ${question}\nAnswer:`,
-        temperature: 0.85,
-        max_tokens: 300,
+        temperature: 0.75,
+        max_tokens: 200,
       }),
     });
     const json = await res.json();
@@ -99,8 +99,10 @@ export async function analyzeUser(
       method: "POST",
       body: JSON.stringify({
         model: "text-davinci-003",
-        prompt: `Provided a person's tweets, their handle, and their real name, act as a psychologist and describe the person in detail. Be specific and include a list of some of their personal values, interests and history.\nName: ${name}\nHandle: ${username}\nTweets: ${tweetText}.\nAnalysis:`,
-        temperature: 0.75,
+        prompt: `Provided a person's tweets, their handle, and their real name, act as a psychologist and describe the person. Make sure to talk about both their success and failures. Be specific and speculate.\nName: ${name}\nHandle: ${username}\nTweets: ${tweetText}.\nAnalysis:`,
+        temperature: 1,
+        presence_penalty: 0.3,
+        frequency_penalty: 0.1,
         max_tokens: 350,
       }),
     });

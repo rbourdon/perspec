@@ -27,6 +27,9 @@ export default async function handler(req: NextRequest) {
       JSON.stringify({
         status: "fail",
         message: "Environment Configuration Error",
+        data: {
+          analysis: "Environment Configuration Error",
+        },
       })
     );
   }
@@ -36,6 +39,9 @@ export default async function handler(req: NextRequest) {
       JSON.stringify({
         status: "fail",
         message: "Missing required parameters",
+        data: {
+          analysis: "Missing required parameters",
+        },
       })
     );
   }
@@ -77,7 +83,7 @@ export default async function handler(req: NextRequest) {
     searchTweets.length === 0 ? tweets : searchTweets,
     searchTweets.length === 0 ? undefined : [tweets]
   );
-  const tweetText = tweetsToTokenText(finalTweets, 3500);
+  const tweetText = tweetsToTokenText(finalTweets, 3800);
 
   const answer = await answerQuestionAboutUser(
     name,
@@ -102,6 +108,7 @@ export default async function handler(req: NextRequest) {
   return new Response(
     JSON.stringify({
       status: "success",
+      message: "Successfully analyzed tweets.",
       data: { analysis: answer },
     })
   );
