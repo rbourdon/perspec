@@ -204,7 +204,7 @@ export function tweetsToTokenText(
 }
 
 export async function getTweets(
-  count: number,
+  count: 1 | 2 | 3,
   id: string,
   ignoreRetweets: boolean,
   ignoreReplies: boolean
@@ -220,44 +220,58 @@ export async function getTweets(
 
   const tweetBatches: {
     tweets: { id: string; text: string }[];
-    oldest_id?: string;
+    next_token?: string;
   }[] = [];
+
   try {
-    await Promise.all(
-      Array(count)
-        .fill(0)
-        .map(async (_, i) => {
-          const someTweets = await client.tweets.usersIdTweets(
-            id,
-            i > 0 && tweetBatches[i - 1]?.oldest_id
-              ? {
-                  until_id: tweetBatches[i - 1]?.oldest_id,
-                  max_results: 100,
-                  exclude: exclude,
-                }
-              : {
-                  max_results: 100,
-                  exclude: exclude,
-                }
-          );
-          if (someTweets.data) {
-            tweetBatches.push({
-              tweets: someTweets.data.map((tweet) => ({
-                id: tweet.id,
-                text: tweet.text,
-              })),
-              ...(someTweets.meta?.oldest_id && {
-                oldest_id: someTweets.meta.oldest_id,
-              }),
-            });
-          }
-          return someTweets;
-        })
-    );
+    const set1 = await client.tweets.usersIdTweets(id, {
+      max_results: 100,
+      exclude: exclude,
+    });
+    tweetBatches.push({
+      tweets:
+        set1.data?.map((tweet) => ({
+          id: tweet.id,
+          text: tweet.text,
+        })) ?? [],
+      next_token: set1.meta?.next_token,
+    });
+    if (count > 1 && tweetBatches[0].next_token) {
+      const set2 = await client.tweets.usersIdTweets(id, {
+        max_results: 100,
+        exclude: exclude,
+        pagination_token: tweetBatches[0].next_token,
+      });
+      tweetBatches.push({
+        tweets:
+          set2.data?.map((tweet) => ({
+            id: tweet.id,
+            text: tweet.text,
+          })) ?? [],
+        next_token: set2.meta?.next_token,
+      });
+    }
+    if (count > 2 && tweetBatches[1].next_token) {
+      const set3 = await client.tweets.usersIdTweets(id, {
+        max_results: 100,
+        exclude: exclude,
+        pagination_token: tweetBatches[1].next_token,
+      });
+      tweetBatches.push({
+        tweets:
+          set3.data?.map((tweet) => ({
+            id: tweet.id,
+            text: tweet.text,
+          })) ?? [],
+        next_token: set3.meta?.next_token,
+      });
+    }
+
     const tweets = tweetBatches.map((batch) => batch.tweets).flat();
 
     return tweets;
   } catch (e) {
+    console.error(e);
     return [];
   }
 }
