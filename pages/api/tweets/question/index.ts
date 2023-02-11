@@ -83,7 +83,7 @@ export default async function handler(req: NextRequest) {
     searchTweets.length === 0 ? tweets : searchTweets,
     searchTweets.length === 0 ? undefined : [tweets]
   );
-  const tweetText = tweetsToTokenText(finalTweets, 3800);
+  const tweetText = tweetsToTokenText(finalTweets, 3400);
 
   const answer = await answerQuestionAboutUser(
     name,
