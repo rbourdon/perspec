@@ -64,7 +64,7 @@ export default function Home() {
       </Head>
       <main className="flex justify-center items-center min-h-screen">
         <div>
-          <p>{`Get started by going to /user/{username}`}</p>
+          <p>{`Get started by going to /{username}`}</p>
           {/* <input
             type="text"
             className="w-full max-w-xl mt-12 text-sm px-4 py-2 bg-black/10 rounded-full focus:outline-none"

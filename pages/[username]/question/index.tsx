@@ -128,7 +128,9 @@ export default function Question({
               )}
               {aiResponse && (
                 <>
-                  <p className="w-full mt-8 font-bold text-lg">AI:</p>
+                  <p className="w-full mt-8 font-bold text-lg">
+                    Meta Analysis:
+                  </p>
                   <p className="w-full whitespace-pre-wrap leading-5">
                     {aiResponse.analysis.trim()}
                   </p>
