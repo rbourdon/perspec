@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest } from "next/server";
 import { getTwitterUsers } from "@/lib/utils";
 
 export const config = {

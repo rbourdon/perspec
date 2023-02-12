@@ -1,11 +1,7 @@
 import Head from "next/head";
 import Image from "next/image";
-import { Inter } from "@next/font/google";
-import { Client } from "twitter-api-sdk";
-import { text } from "stream/consumers";
 import { useRouter } from "next/router";
 import { HashLoader } from "react-spinners";
-import { authOptions } from "pages/api/auth/[...nextauth]";
 import type { InferGetStaticPropsType, GetStaticProps } from "next";
 import { signIn, signOut, useSession } from "next-auth/react";
 import {
@@ -15,8 +11,6 @@ import {
   tweetsToTokenText,
 } from "@/lib/utils";
 
-const inter = Inter({ subsets: ["latin"] });
-
 export default function User({
   name,
   username,
@@ -24,7 +18,7 @@ export default function User({
   result,
 }: InferGetStaticPropsType<typeof getStaticProps>) {
   const router = useRouter();
-  const { data: session, status } = useSession();
+  const { status } = useSession();
 
   if (status === "loading") {
     return (

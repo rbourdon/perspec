@@ -1,17 +1,11 @@
 import Head from "next/head";
 import Image from "next/image";
-import { Inter } from "@next/font/google";
-import { Client } from "twitter-api-sdk";
-import { text } from "stream/consumers";
 import { useRouter } from "next/router";
 import { HashLoader } from "react-spinners";
-import { authOptions } from "@/pages/api/auth/[...nextauth]";
 import type { InferGetStaticPropsType, GetStaticProps } from "next";
 import { signIn, signOut, useSession } from "next-auth/react";
 import { useState } from "react";
 import { getTweets, getTwitterId } from "@/lib/utils";
-
-const inter = Inter({ subsets: ["latin"] });
 
 export default function Question({
   name,
@@ -20,7 +14,7 @@ export default function Question({
   result,
 }: InferGetStaticPropsType<typeof getStaticProps>) {
   const router = useRouter();
-  const { data: session, status } = useSession();
+  const { status } = useSession();
   const [aiResponse, setAiResponse] = useState<{
     answer: string;
     analysis: string;
@@ -59,7 +53,7 @@ export default function Question({
           const analysisResult = resJson.data;
           setAiResponse(analysisResult);
         } else {
-          const analysisResult = setAiResponse({
+          setAiResponse({
             answer:
               "Sorry, we couldn't analyze this question. Please try again later.",
             analysis:

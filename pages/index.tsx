@@ -1,17 +1,12 @@
 import Head from "next/head";
-import Image from "next/image";
-import { Inter } from "@next/font/google";
-import { useState } from "react";
-import { signIn, signOut, useSession } from "next-auth/react";
-import { useRouter } from "next/router";
-
-const inter = Inter({ subsets: ["latin"] });
+import { signIn, useSession } from "next-auth/react";
+// import { useRouter } from "next/router";
 
 export default function Home() {
-  const router = useRouter();
-  const { data: session, status } = useSession();
-  const [users, setUsers] = useState<string | null>(null);
-  const [isLoadingUsers, setIsLoadingUsers] = useState(false);
+  // const router = useRouter();
+  const { status } = useSession();
+  // const [users, setUsers] = useState<string | null>(null);
+  // const [isLoadingUsers, setIsLoadingUsers] = useState(false);
   if (status === "loading") {
     return (
       <main className="flex flex-col items-center justify-center min-h-screen">
