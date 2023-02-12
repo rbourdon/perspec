@@ -15,7 +15,7 @@ export async function getTwitterId(username: string) {
     };
   } catch (e) {
     console.error(e);
-    return { id: null, name: null };
+    return { id: null, name: null, pic: null };
   }
 }
 
@@ -32,6 +32,7 @@ export async function getTwitterUsers(query: string) {
         },
       }
     );
+
     const json = await res.json();
 
     return json;
@@ -56,6 +57,7 @@ export async function getRecentTweetsBySearch(
       tweets.data?.map((tweet) => ({ id: tweet.id, text: tweet.text })) ?? []
     );
   } catch (e) {
+    console.error(e);
     return [];
   }
 }
@@ -75,9 +77,12 @@ export async function convertToThird(question: string) {
         temperature: 0.1,
       }),
     });
-    const json = await res.json();
-
-    return json.choices[0].text;
+    if (res.ok) {
+      const json = await res.json();
+      return json.choices[0].text;
+    } else {
+      return "";
+    }
   } catch (e) {
     console.error(e);
     return "";
@@ -99,9 +104,12 @@ export async function convertToSecond(question: string) {
         temperature: 0.1,
       }),
     });
-    const json = await res.json();
-
-    return json.choices[0].text;
+    if (res.ok) {
+      const json = await res.json();
+      return json.choices[0].text;
+    } else {
+      return "";
+    }
   } catch (e) {
     console.error(e);
     return "";
@@ -124,17 +132,21 @@ export async function getSearchTermsByQuestion(question: string) {
         best_of: 2,
       }),
     });
-    const json = await res.json();
+    if (res.ok) {
+      const json = await res.json();
 
-    return json.choices[0].text
-      .replaceAll("\n\n", ",")
-      .replaceAll("\n", ",")
-      .replaceAll(",,", ",")
-      .replaceAll('"', "")
-      .split(",")
-      .filter((term: string) => term.length > 1)
-      .map((term: string) => `"${term.trim()}"`)
-      .join(" OR ");
+      return json.choices[0].text
+        .replaceAll("\n\n", ",")
+        .replaceAll("\n", ",")
+        .replaceAll(",,", ",")
+        .replaceAll('"', "")
+        .split(",")
+        .filter((term: string) => term.length > 1)
+        .map((term: string) => `"${term.trim()}"`)
+        .join(" OR ");
+    } else {
+      return "";
+    }
   } catch (e) {
     console.error(e);
     return "";
@@ -161,9 +173,12 @@ export async function answerQuestionAboutUser(
         max_tokens: 200,
       }),
     });
-    const json = await res.json();
-
-    return json.choices[0].text;
+    if (res.ok) {
+      const json = await res.json();
+      return json.choices[0].text;
+    } else {
+      return "";
+    }
   } catch (e) {
     console.error(e);
     return "";
@@ -190,8 +205,12 @@ export async function answerQuestionAsUser(
         max_tokens: 150,
       }),
     });
-    const json = await res.json();
-    return json.choices[0].text;
+    if (res.ok) {
+      const json = await res.json();
+      return json.choices[0].text;
+    } else {
+      return "";
+    }
   } catch (e) {
     console.error(e);
     return "";
@@ -227,6 +246,7 @@ export async function analyzeUser(
       return "Failed to get user analysis";
     }
   } catch (e) {
+    console.error(e);
     return "";
   }
 }
