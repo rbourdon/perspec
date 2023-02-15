@@ -251,6 +251,40 @@ export async function analyzeUser(
   }
 }
 
+export async function analyzeUserCommunityView(
+  name: string,
+  username: string,
+  tweetText: string
+) {
+  try {
+    const res = await fetch("https://api.openai.com/v1/completions", {
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${process.env.OPENAI_API_KEY ?? ""}`,
+      },
+      method: "POST",
+      body: JSON.stringify({
+        model: "text-davinci-003",
+        prompt: `Provided tweets directed at a person, their handle, and their real name, describe how people see the person. Be specific and speculate.\n\n"""\nName: ${name}\nHandle: ${username}\nTweets: ${tweetText}.\n"""\n\nAnalysis:`,
+        temperature: 1,
+        presence_penalty: 0.3,
+        frequency_penalty: 0.1,
+        max_tokens: 350,
+      }),
+    });
+    if (res.ok) {
+      const json = await res.json();
+      return json.choices[0].text;
+    } else {
+      console.log(res.status, res.statusText);
+      return "Failed to get user analysis";
+    }
+  } catch (e) {
+    console.error(e);
+    return "";
+  }
+}
+
 export function combineTweets(
   primaryTweets: {
     id: string;
@@ -301,7 +335,24 @@ export function tweetsToTokenText(
   return tweetText.join(" ");
 }
 
-export async function getTweets(
+export async function getRecentTweetsToUser(id: string) {
+  try {
+    const client = new Client(process.env.TWITTER_BEARER_TOKEN!);
+    const tweets = await client.tweets.tweetsRecentSearch({
+      query: `to:${id}`,
+      max_results: 100,
+    });
+
+    return (
+      tweets.data?.map((tweet) => ({ id: tweet.id, text: tweet.text })) ?? []
+    );
+  } catch (e) {
+    console.error(e);
+    return [];
+  }
+}
+
+export async function getTweetsFromUser(
   count: 1 | 2 | 3,
   id: string,
   ignoreRetweets: boolean,

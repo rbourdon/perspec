@@ -6,7 +6,9 @@ import type { InferGetStaticPropsType, GetStaticProps } from "next";
 import { signIn, signOut, useSession } from "next-auth/react";
 import {
   analyzeUser,
-  getTweets,
+  analyzeUserCommunityView,
+  getRecentTweetsToUser,
+  getTweetsFromUser,
   getTwitterId,
   tweetsToTokenText,
 } from "@/lib/utils";
@@ -16,6 +18,7 @@ export default function User({
   username,
   pic,
   result,
+  toAnalysis,
 }: InferGetStaticPropsType<typeof getStaticProps>) {
   const router = useRouter();
   const { status } = useSession();
@@ -74,6 +77,7 @@ export default function User({
               )}`}</p>
               <p className="text-md mt-1">{name}</p>
               <p className="mt-8 whitespace-pre-wrap">{result.trim()}</p>
+              <p className="mt-8 whitespace-pre-wrap">{toAnalysis.trim()}</p>
             </>
           ) : (
             <div className="flex items-center h-full justify-center">
@@ -109,32 +113,42 @@ export const getStaticProps: GetStaticProps = async (context) => {
       revalidate: false,
     };
   }
-
-  const tweets = await getTweets(2, id, true, true);
-  if (tweets.length === 0) {
+  const tweetsTo = await getRecentTweetsToUser(id);
+  const tweetsFrom = await getTweetsFromUser(2, id, true, true);
+  if (tweetsFrom.length === 0) {
     return {
       props: { name, username, pic, result: "Couldn't retreieve any tweets" },
       revalidate: 60,
     };
   }
-  const tweetText = await tweetsToTokenText(tweets, 3000);
+
+  const toTweetText = await tweetsToTokenText(tweetsTo, 3000);
+  const toAnalysis = await analyzeUserCommunityView(
+    name,
+    username,
+    toTweetText
+  );
+
+  const tweetText = await tweetsToTokenText(tweetsFrom, 3000);
   const analysis = await analyzeUser(name, username, tweetText);
 
-  if (analysis.length === 0) {
+  if (analysis.length === 0 || toAnalysis.length === 0) {
     return {
       props: {
         name,
         username,
         pic,
         result:
-          "Failed to get analysis. Like Open AI API is overloaded or too many requests. Please try again after a few minutes.",
+          "Failed to get analysis. Likely Open AI API is overloaded or too many requests. Please try again after a few minutes.",
+        toAnalysis:
+          "Failed to get analysis. Likely Open AI API is overloaded or too many requests. Please try again after a few minutes.",
       },
       revalidate: 60,
     };
   }
 
   return {
-    props: { name, username, pic, result: analysis },
+    props: { name, username, pic, result: analysis, toAnalysis },
     revalidate: false,
   };
 };

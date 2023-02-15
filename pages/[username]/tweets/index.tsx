@@ -3,7 +3,11 @@ import { useRouter } from "next/router";
 import { HashLoader } from "react-spinners";
 import type { InferGetStaticPropsType, GetStaticProps } from "next";
 import { signIn, signOut, useSession } from "next-auth/react";
-import { getTweets, getTwitterId, tweetsToTokenText } from "@/lib/utils";
+import {
+  getTweetsFromUser,
+  getTwitterId,
+  tweetsToTokenText,
+} from "@/lib/utils";
 
 export default function Tweets({
   name,
@@ -79,7 +83,7 @@ export const getStaticProps: GetStaticProps = async (context) => {
     };
   }
 
-  const tweets = await getTweets(2, id, true, true);
+  const tweets = await getTweetsFromUser(2, id, true, true);
   if (tweets.length === 0) {
     return {
       props: { name: name, username, result: "Couldn't retreieve any tweets" },

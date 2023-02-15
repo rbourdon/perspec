@@ -5,7 +5,7 @@ import { HashLoader } from "react-spinners";
 import type { InferGetStaticPropsType, GetStaticProps } from "next";
 import { signIn, signOut, useSession } from "next-auth/react";
 import { useState } from "react";
-import { getTweets, getTwitterId } from "@/lib/utils";
+import { getTweetsFromUser, getTwitterId } from "@/lib/utils";
 
 export default function Question({
   name,
@@ -178,7 +178,7 @@ export const getStaticProps: GetStaticProps = async (context) => {
   }
 
   //Get all tweets
-  const tweets = await getTweets(1, id, true, true);
+  const tweets = await getTweetsFromUser(1, id, true, true);
 
   if (tweets.length == 0) {
     return {
