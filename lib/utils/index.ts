@@ -335,13 +335,14 @@ export function tweetsToTokenText(
   return tweetText.join(" ");
 }
 
-export async function getRecentTweetsToUser(id: string) {
+export async function getRecentTweetsToUser(id: string, username: string) {
   try {
     const client = new Client(process.env.TWITTER_BEARER_TOKEN!);
     const tweets = await client.tweets.tweetsRecentSearch({
-      query: `to:${id}`,
+      query: `to:${id} OR @${username}`,
       max_results: 100,
     });
+    client.tweets;
 
     return (
       tweets.data?.map((tweet) => ({ id: tweet.id, text: tweet.text })) ?? []
