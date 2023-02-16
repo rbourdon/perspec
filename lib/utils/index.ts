@@ -242,7 +242,7 @@ export async function analyzeUser(
       const json = await res.json();
       return json.choices[0].text;
     } else {
-      console.log(res.status, res.statusText);
+      console.warn(res.status, res.statusText);
       return "Failed to get user analysis. Please check back later.";
     }
   } catch (e) {
@@ -257,7 +257,6 @@ export async function analyzeUserCommunityView(
   tweetText: string
 ) {
   try {
-    console.log(tweetText);
     const res = await fetch("https://api.openai.com/v1/completions", {
       headers: {
         "Content-Type": "application/json",
@@ -277,7 +276,7 @@ export async function analyzeUserCommunityView(
       const json = await res.json();
       return json.choices[0].text;
     } else {
-      console.log(res.status, res.statusText);
+      console.warn(res.status, res.statusText);
       return "Failed to get user analysis. Please check back later.";
     }
   } catch (e) {
@@ -335,9 +334,10 @@ export function tweetsToTokenText(
       .map((text) => (text[0] === "-" ? text.slice(1) : text))
       .join("\n")
       .split(" ")
-      .slice(0, tokenLimit * 0.7) ?? [];
+      .filter((t) => t.length > 0 && t !== "-")
+      .join(" ") ?? "";
 
-  return tweetText.join(" ");
+  return tweetText.slice(0, tokenLimit * 4).trim();
 }
 
 export async function getRecentTweetsToUser(id: string, username: string) {
@@ -349,7 +349,10 @@ export async function getRecentTweetsToUser(id: string, username: string) {
     });
 
     return (
-      tweets.data?.map((tweet) => ({ id: tweet.id, text: tweet.text })) ?? []
+      tweets.data?.map((tweet) => ({
+        id: tweet.id,
+        text: tweet.text.replaceAll(`@${username}`, ""),
+      })) ?? []
     );
   } catch (e) {
     console.error(e);
