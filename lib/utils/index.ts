@@ -310,10 +310,13 @@ export function combineTweets(
 }
 
 export function tweetsToTokenText(
-  tweets: {
-    id: string;
-    text: string;
-  }[],
+  tweets:
+    | {
+        id: string;
+        text: string;
+      }[]
+    | undefined
+    | null,
   tokenLimit: number
 ) {
   const tweetText =
