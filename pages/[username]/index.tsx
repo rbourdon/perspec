@@ -76,8 +76,10 @@ export default function User({
                 ""
               )}`}</p>
               <p className="text-md mt-1">{name}</p>
-              <p className="mt-8 whitespace-pre-wrap">{result.trim()}</p>
-              <p className="mt-8 whitespace-pre-wrap">{toAnalysis.trim()}</p>
+              <p className="w-full font-bold mt-8">{`Analysis of @${username}'s tweets`}</p>
+              <p className="whitespace-pre-wrap">{result.trim()}</p>
+              <p className="w-full font-bold mt-8">{`What people are saying about @${username}`}</p>
+              <p className="whitespace-pre-wrap">{toAnalysis.trim()}</p>
             </>
           ) : (
             <div className="flex items-center h-full justify-center">
