@@ -316,21 +316,22 @@ export function tweetsToTokenText(
   }[],
   tokenLimit: number
 ) {
-  const tweetText = tweets
-    .map((tweet) =>
-      tweet.text
-        .replace(/(?:https?|ftp):\/\/[\n\S]+/g, "")
-        .replace(new RegExp("[\u1000-\uFFFF]+", "g"), "")
-        .replaceAll("�", "")
-        .replaceAll("  ", " ")
-        .replaceAll("\n\n", "\n")
-        .trim()
-    )
-    .filter((text) => text.split(" ").length > 5)
-    .map((text) => (text[0] === "-" ? text.slice(1) : text))
-    .join("\n")
-    .split(" ")
-    .slice(0, tokenLimit * 0.75);
+  const tweetText =
+    tweets
+      ?.map((tweet) =>
+        tweet.text
+          .replace(/(?:https?|ftp):\/\/[\n\S]+/g, "")
+          .replace(new RegExp("[\u1000-\uFFFF]+", "g"), "")
+          .replaceAll("�", "")
+          .replaceAll("  ", " ")
+          .replaceAll("\n\n", "\n")
+          .trim()
+      )
+      .filter((text) => text.split(" ").length > 5)
+      .map((text) => (text[0] === "-" ? text.slice(1) : text))
+      .join("\n")
+      .split(" ")
+      .slice(0, tokenLimit * 0.75) ?? [];
 
   return tweetText.join(" ");
 }
