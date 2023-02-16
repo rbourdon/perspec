@@ -232,10 +232,10 @@ export async function analyzeUser(
       body: JSON.stringify({
         model: "text-davinci-003",
         prompt: `Provided a person's tweets, their handle, and their real name, act as a psychologist and describe the person. Make sure to talk about both their success and failures. Be specific and speculate.\n\n"""\nName: ${name}\nHandle: ${username}\nTweets: ${tweetText}.\n"""\n\nAnalysis:`,
-        temperature: 1,
+        temperature: 0.8,
         presence_penalty: 0.3,
         frequency_penalty: 0.1,
-        max_tokens: 350,
+        max_tokens: 300,
       }),
     });
     if (res.ok) {
@@ -257,6 +257,7 @@ export async function analyzeUserCommunityView(
   tweetText: string
 ) {
   try {
+    console.log(tweetText);
     const res = await fetch("https://api.openai.com/v1/completions", {
       headers: {
         "Content-Type": "application/json",
@@ -266,10 +267,10 @@ export async function analyzeUserCommunityView(
       body: JSON.stringify({
         model: "text-davinci-003",
         prompt: `Provided tweets directed at a person, their handle, and their real name, describe how people see the person. Be specific and speculate.\n\n"""\nName: ${name}\nHandle: ${username}\nTweets: ${tweetText}.\n"""\n\nAnalysis:`,
-        temperature: 1,
+        temperature: 0.5,
         presence_penalty: 0.3,
         frequency_penalty: 0.1,
-        max_tokens: 350,
+        max_tokens: 300,
       }),
     });
     if (res.ok) {
@@ -343,10 +344,9 @@ export async function getRecentTweetsToUser(id: string, username: string) {
   try {
     const client = new Client(process.env.TWITTER_BEARER_TOKEN!);
     const tweets = await client.tweets.tweetsRecentSearch({
-      query: `to:${id} OR @${username}`,
+      query: `to:${id} OR @${username} -is:retweet`,
       max_results: 100,
     });
-    client.tweets;
 
     return (
       tweets.data?.map((tweet) => ({ id: tweet.id, text: tweet.text })) ?? []
