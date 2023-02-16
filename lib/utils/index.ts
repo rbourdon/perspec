@@ -243,7 +243,7 @@ export async function analyzeUser(
       return json.choices[0].text;
     } else {
       console.log(res.status, res.statusText);
-      return "Failed to get user analysis";
+      return "Failed to get user analysis. Please check back later.";
     }
   } catch (e) {
     console.error(e);
@@ -278,7 +278,7 @@ export async function analyzeUserCommunityView(
       return json.choices[0].text;
     } else {
       console.log(res.status, res.statusText);
-      return "Failed to get user analysis";
+      return "Failed to get user analysis. Please check back later.";
     }
   } catch (e) {
     console.error(e);
@@ -335,7 +335,7 @@ export function tweetsToTokenText(
       .map((text) => (text[0] === "-" ? text.slice(1) : text))
       .join("\n")
       .split(" ")
-      .slice(0, tokenLimit * 0.75) ?? [];
+      .slice(0, tokenLimit * 0.7) ?? [];
 
   return tweetText.join(" ");
 }
