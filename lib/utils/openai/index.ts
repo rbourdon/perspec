@@ -176,7 +176,7 @@ export async function analyzeUser(
     });
     if (res.ok) {
       const json = await res.json();
-      return json.choices[0].text;
+      return json.choices[0].text as string;
     } else {
       console.warn(res.status, res.statusText);
       return "Failed to get user analysis. Please check back later.";
