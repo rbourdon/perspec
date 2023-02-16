@@ -99,7 +99,8 @@ export const getStaticProps: GetStaticProps = async (context) => {
         name: "Unknown",
         username: "Unknown",
         pic: null,
-        result: "No user found",
+        result: "No username",
+        toAnalysis: "No username",
       },
       revalidate: false,
     };
@@ -109,15 +110,28 @@ export const getStaticProps: GetStaticProps = async (context) => {
 
   if (!id || !name) {
     return {
-      props: { name: "Unknown", username, pic: null, result: "No user found" },
+      props: {
+        name: "Unknown Person",
+        username,
+        pic: null,
+        result:
+          "Failed to find matching twitter user. Please check username and try again.",
+        toAnalysis: "",
+      },
       revalidate: false,
     };
   }
-  const tweetsTo = await getRecentTweetsToUser(id);
+  const tweetsTo = await getRecentTweetsToUser(id, username);
   const tweetsFrom = await getTweetsFromUser(2, id, true, true);
-  if (tweetsFrom.length === 0) {
+  if (tweetsFrom.length === 0 || tweetsTo.length === 0) {
     return {
-      props: { name, username, pic, result: "Couldn't retreieve any tweets" },
+      props: {
+        name,
+        username,
+        pic,
+        result: "Couldn't retreieve any tweets from this user.",
+        toAnalysis: "Failed to retreive tweets about this user.",
+      },
       revalidate: 60,
     };
   }
