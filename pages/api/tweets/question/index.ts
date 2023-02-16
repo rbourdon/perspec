@@ -1,17 +1,13 @@
 import { NextRequest } from "next/server";
-//import { getServerSession } from "next-auth/next";
-//import { authOptions } from "@/pages/api/auth/[...nextauth]";
 import {
   answerQuestionAboutUser,
   answerQuestionAsUser,
-  combineTweets,
+  getSearchTermsByQuestion,
   convertToSecond,
   convertToThird,
-  getRecentTweetsBySearch,
-  getSearchTermsByQuestion,
-  getTwitterId,
-  tweetsToTokenText,
-} from "@/lib/utils";
+} from "@/lib/utils/openai";
+import { getRecentTweetsBySearch, getTwitterId } from "@/lib/utils/twitter";
+import { tweetsToTokenText, combineTweets } from "@/lib/utils";
 
 export const config = {
   runtime: "edge",

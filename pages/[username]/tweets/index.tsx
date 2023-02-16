@@ -3,11 +3,8 @@ import { useRouter } from "next/router";
 import { HashLoader } from "react-spinners";
 import type { InferGetStaticPropsType, GetStaticProps } from "next";
 import { signIn, signOut, useSession } from "next-auth/react";
-import {
-  getTweetsFromUser,
-  getTwitterId,
-  tweetsToTokenText,
-} from "@/lib/utils";
+import { getTweetsFromUser, getTwitterId } from "@/lib/utils/twitter";
+import { tweetsToTokenText } from "@/lib/utils";
 
 export default function Tweets({
   name,

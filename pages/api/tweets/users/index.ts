@@ -1,5 +1,5 @@
 import { NextRequest } from "next/server";
-import { getTwitterUsers } from "@/lib/utils";
+import { getTwitterUsers } from "@/lib/utils/twitter";
 
 export const config = {
   runtime: "edge",

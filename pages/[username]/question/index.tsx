@@ -5,7 +5,7 @@ import { HashLoader } from "react-spinners";
 import type { InferGetStaticPropsType, GetStaticProps } from "next";
 import { signIn, signOut, useSession } from "next-auth/react";
 import { useState } from "react";
-import { getTweetsFromUser, getTwitterId } from "@/lib/utils";
+import { getTweetsFromUser, getTwitterId } from "@/lib/utils/twitter";
 
 export default function Question({
   name,

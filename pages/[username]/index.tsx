@@ -4,14 +4,13 @@ import { useRouter } from "next/router";
 import { HashLoader } from "react-spinners";
 import type { InferGetStaticPropsType, GetStaticProps } from "next";
 import { signIn, signOut, useSession } from "next-auth/react";
+import { analyzeUser, analyzeUserCommunityView } from "@/lib/utils/openai";
+import { tweetsToTokenText } from "@/lib/utils";
 import {
-  analyzeUser,
-  analyzeUserCommunityView,
   getRecentTweetsToUser,
   getTweetsFromUser,
   getTwitterId,
-  tweetsToTokenText,
-} from "@/lib/utils";
+} from "@/lib/utils/twitter";
 
 export default function User({
   name,
