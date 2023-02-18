@@ -96,14 +96,7 @@ export const getStaticProps: GetStaticProps = async (context) => {
 
   if (!username) {
     return {
-      props: {
-        name: "Unknown",
-        username: "Unknown",
-        pic: null,
-        result: "No username",
-        toAnalysis: "No username",
-      },
-      revalidate: false,
+      notFound: true,
     };
   }
 
@@ -133,7 +126,7 @@ export const getStaticProps: GetStaticProps = async (context) => {
         result: "Couldn't retreieve any tweets from this user.",
         toAnalysis: "Failed to retreive tweets about this user.",
       },
-      revalidate: 60,
+      revalidate: 180,
     };
   }
 
@@ -158,7 +151,7 @@ export const getStaticProps: GetStaticProps = async (context) => {
         toAnalysis:
           "Failed to get analysis. Likely Open AI API is overloaded or too many requests. Please try again after a few minutes.",
       },
-      revalidate: 60,
+      revalidate: 180,
     };
   }
 

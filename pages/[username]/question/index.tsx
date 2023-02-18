@@ -231,13 +231,7 @@ export const getStaticProps: GetStaticProps = async (context) => {
 
   if (!username) {
     return {
-      props: {
-        name: "Unknown",
-        username: "Invalid user",
-        pic: null,
-        result: "Missing username",
-      },
-      revalidate: false,
+      notFound: true,
     };
   }
 
@@ -266,7 +260,7 @@ export const getStaticProps: GetStaticProps = async (context) => {
         pic,
         result: "Failed to retrieve tweets",
       },
-      revalidate: 60,
+      revalidate: 180,
     };
   }
 

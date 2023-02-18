@@ -84,13 +84,14 @@ export const getStaticProps: GetStaticProps = async (context) => {
   if (tweets.length === 0) {
     return {
       props: { name: name, username, result: "Couldn't retreieve any tweets" },
-      revalidate: 60,
+      revalidate: 180,
     };
   }
 
   const tweetText = await tweetsToTokenText(tweets, 3500);
   return {
     props: { name, username, result: tweetText },
+    revalidate: false,
   };
 };
 
