@@ -150,7 +150,7 @@ export async function answerQuestionAboutUser(
 ) {
   const payload = {
     model: "text-davinci-003",
-    prompt: `Read the following user details, including real name and list tweets, and then answer the following question about the user in the tone of a psychologist. Explain your answer. If it isn't possible to answer based on the tweets, you should speculate and cite tweets.\n\n"""\nName: ${name}\nTweets: ${tweetText}.\n"""\n\nQuestion: ${question}\n\nAnswer:`,
+    prompt: `Read the following user details, including real name and list tweets, and then answer the question about the user in the tone of a psychologist. Explain your answer and cite tweets if possible. If it isn't possible to answer based on the tweets, you should speculate.\n\n"""\nName: ${name}\nTweets: ${tweetText}.\n"""\n\nQuestion: ${question}\n\nAnswer:`,
     temperature: 0.4,
     max_tokens: 200,
     ...(stream && { stream: true }),
@@ -192,7 +192,7 @@ export async function answerQuestionAsUser(
 ) {
   const payload = {
     model: "text-davinci-003",
-    prompt: `"""\n${tweetText}\n"""\n\nThe above text is a list of tweets made by ${name}. Use the tweets to speculate about ${name}'s perspective and then pretend to be this ${name} and answer the following question in their speaking style and language.\n\nQuestion: ${question}\n\nAnswer:`,
+    prompt: `"""\n${tweetText}\n"""\n\nThe above text is a list of tweets made by ${name}. Using the tweets to determine the most likely answer, pretend to be ${name} and answer the following question in their speaking style and language.\n\nQuestion: ${question}\n\nAnswer:`,
     temperature: 0.65,
     max_tokens: 150,
     ...(stream && { stream: true }),
