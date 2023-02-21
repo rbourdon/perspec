@@ -4,7 +4,11 @@ import {
   convertToThird,
   determineQuestionPerspective,
 } from "@/lib/utils/openai";
-import { getRecentTweetsBySearch, getTwitterId } from "@/lib/utils/twitter";
+import {
+  getRecentTweetsBySearch,
+  getTweetsFromUser,
+  getTwitterId,
+} from "@/lib/utils/twitter";
 import { tweetsToTokenText, combineTweets } from "@/lib/utils";
 
 export const config = {
@@ -78,9 +82,21 @@ export default async function handler(req: Request): Promise<Response> {
   //Make tweet text
   const finalTweets = combineTweets(
     !searchTweets || searchTweets.length === 0 ? tweets : searchTweets,
-    !searchTweets || searchTweets.length === 0 ? undefined : [tweets]
+    !searchTweets || searchTweets.length === 0
+      ? [
+          await getTweetsFromUser(
+            1,
+            id,
+            true,
+            true,
+            tweets.reduce((prev, curr) =>
+              parseInt(curr.id) < parseInt(prev.id) ? curr : prev
+            ).id
+          ),
+        ]
+      : [tweets]
   );
-  const tweetText = tweetsToTokenText(finalTweets, 3000);
+  const tweetText = tweetsToTokenText(finalTweets, 3400);
   const perspective = await determineQuestionPerspective(question);
 
   if (

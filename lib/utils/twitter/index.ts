@@ -47,6 +47,7 @@ export async function getRecentTweetsBySearch(
 ) {
   try {
     const client = new Client(process.env.TWITTER_BEARER_TOKEN!);
+
     const tweets = await client.tweets.tweetsRecentSearch({
       query: `from:${id} (${searchString})`,
       max_results: 100,
@@ -85,7 +86,8 @@ export async function getTweetsFromUser(
   count: 1 | 2 | 3,
   id: string,
   ignoreRetweets: boolean,
-  ignoreReplies: boolean
+  ignoreReplies: boolean,
+  until?: string
 ) {
   const client = new Client(process.env.TWITTER_BEARER_TOKEN!);
   const exclude: ("retweets" | "replies")[] = [];
@@ -105,6 +107,7 @@ export async function getTweetsFromUser(
     const set1 = await client.tweets.usersIdTweets(id, {
       max_results: 100,
       exclude: exclude,
+      until_id: until,
     });
     tweetBatches.push({
       tweets:

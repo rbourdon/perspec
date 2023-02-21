@@ -88,7 +88,7 @@ export const getStaticProps: GetStaticProps = async (context) => {
     };
   }
 
-  const tweetText = await tweetsToTokenText(tweets, 3500);
+  const tweetText = await tweetsToTokenText(tweets, 3400);
   return {
     props: { name, username, result: tweetText },
     revalidate: false,

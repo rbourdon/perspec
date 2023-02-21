@@ -82,7 +82,7 @@ export default async function handler(req: NextRequest) {
     !searchTweets || searchTweets.length === 0 ? tweets : searchTweets,
     !searchTweets || searchTweets.length === 0 ? undefined : [tweets]
   );
-  const tweetText = tweetsToTokenText(finalTweets, 3100);
+  const tweetText = tweetsToTokenText(finalTweets, 3400);
 
   const firstPersonQuestion = await convertToSecond(question);
 

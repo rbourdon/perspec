@@ -193,7 +193,7 @@ export async function answerQuestionAsUser(
   const payload = {
     model: "text-davinci-003",
     prompt: `"""\n${tweetText}\n"""\n\nThe above text is a list of tweets made by ${name}. Using the tweets to determine the most likely answer, pretend to be ${name} and answer the following question in their speaking style and language.\n\nQuestion: ${question}\n\nAnswer:`,
-    temperature: 0.65,
+    temperature: 0.2,
     max_tokens: 150,
     ...(stream && { stream: true }),
   };

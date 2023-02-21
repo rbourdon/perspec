@@ -130,14 +130,14 @@ export const getStaticProps: GetStaticProps = async (context) => {
     };
   }
 
-  const toTweetText = await tweetsToTokenText(tweetsTo, 3000);
+  const toTweetText = await tweetsToTokenText(tweetsTo, 3400);
   const toAnalysis = await analyzeUserCommunityView(
     name,
     username,
     toTweetText
   );
 
-  const tweetText = await tweetsToTokenText(tweetsFrom, 3000);
+  const tweetText = await tweetsToTokenText(tweetsFrom, 3400);
   const analysis = await analyzeUser(name, username, tweetText);
 
   if (analysis.length === 0 || toAnalysis.length === 0) {
