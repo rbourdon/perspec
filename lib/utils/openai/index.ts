@@ -280,6 +280,7 @@ export async function analyzeUserCommunityView(
         stream: false,
       }),
     });
+
     if (res.ok) {
       const json = await res.json();
       return json.choices[0].text;

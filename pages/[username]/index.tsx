@@ -130,15 +130,12 @@ export const getStaticProps: GetStaticProps = async (context) => {
     };
   }
 
-  const toTweetText = await tweetsToTokenText(tweetsTo, 3400);
-  const toAnalysis = await analyzeUserCommunityView(
-    name,
-    username,
-    toTweetText
-  );
-
-  const tweetText = await tweetsToTokenText(tweetsFrom, 3400);
-  const analysis = await analyzeUser(name, username, tweetText);
+  const toTweetText = await tweetsToTokenText(tweetsTo, 2500);
+  const tweetText = await tweetsToTokenText(tweetsFrom, 3000);
+  const [toAnalysis, analysis] = await Promise.all([
+    analyzeUserCommunityView(name, username, toTweetText),
+    analyzeUser(name, username, tweetText),
+  ]);
 
   if (analysis.length === 0 || toAnalysis.length === 0) {
     return {
@@ -164,6 +161,6 @@ export const getStaticProps: GetStaticProps = async (context) => {
 export async function getStaticPaths() {
   return {
     paths: [{ params: { username: "elonmusk" } }],
-    fallback: true, // can also be true or 'blocking'
+    fallback: true,
   };
 }

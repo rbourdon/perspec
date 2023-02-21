@@ -1,12 +1,12 @@
 import Head from "next/head";
 import { signIn, useSession } from "next-auth/react";
-// import { useRouter } from "next/router";
+import { useRouter } from "next/router";
 
 export default function Home() {
   // const router = useRouter();
   const { status } = useSession();
-  // const [users, setUsers] = useState<string | null>(null);
-  // const [isLoadingUsers, setIsLoadingUsers] = useState(false);
+  const router = useRouter();
+
   if (status === "loading") {
     return (
       <main className="flex flex-col items-center justify-center min-h-screen">
@@ -14,7 +14,6 @@ export default function Home() {
       </main>
     );
   }
-
   if (status === "unauthenticated") {
     return (
       <main className="flex flex-col items-center justify-center min-h-screen">
@@ -27,32 +26,11 @@ export default function Home() {
     );
   }
 
-  // const getUsers = async (query: string) => {
-  //   if (query.length > 5) {
-  //     try {
-  //       setIsLoadingUsers(true);
-  //       const res = await fetch("/api/tweets/users", {
-  //         method: "POST",
-  //         body: JSON.stringify({ query }),
-  //       });
-  //       if (res.ok) {
-  //         const resJson = await res.json();
-  //         const usersResult = resJson.data?.users;
-  //         setUsers(usersResult);
-  //       } else {
-  //         const usersResult = setUsers(
-  //           "Sorry, we couldn't analyze this question. Please try again later."
-  //         );
-  //       }
-  //       setIsLoadingUsers(false);
-  //     } catch (error) {
-  //       setIsLoadingUsers(false);
-  //       setUsers(null);
-  //     }
-  //   } else {
-  //     setUsers(null);
-  //   }
-  // };
+  const goToUser = (username: string) => {
+    if (username.length > 4 && router.isReady) {
+      router.push(`/${username.replace("@", "")}`);
+    }
+  };
 
   return (
     <>
@@ -64,17 +42,16 @@ export default function Home() {
       </Head>
       <main className="flex justify-center items-center min-h-screen">
         <div>
-          <p>{`Get started by going to /{username}`}</p>
-          {/* <input
+          <p>{`Enter a username to get started`}</p>
+          <input
             type="text"
             className="w-full max-w-xl mt-12 text-sm px-4 py-2 bg-black/10 rounded-full focus:outline-none"
             onKeyDown={(e) => {
               if (e.key === "Enter") {
-                setUsers(null);
-                getUsers(e.currentTarget.value);
+                goToUser(e.currentTarget.value);
               }
             }}
-          /> */}
+          />
         </div>
       </main>
     </>

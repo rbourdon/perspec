@@ -18,29 +18,6 @@ export async function getTwitterId(username: string) {
   }
 }
 
-export async function getTwitterUsers(query: string) {
-  const parsedName = query.replace("@", "");
-
-  try {
-    const res = await fetch(
-      `https://api.twitter.com/1.1/users/search.json?q=${parsedName}`,
-      {
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${process.env.TWITTER_BEARER_TOKEN}`,
-        },
-      }
-    );
-
-    const json = await res.json();
-
-    return json;
-  } catch (e) {
-    console.error(e);
-    return "";
-  }
-}
-
 export async function getRecentTweetsBySearch(
   id: string,
   searchString: string
