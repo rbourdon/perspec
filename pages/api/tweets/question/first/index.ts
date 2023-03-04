@@ -132,6 +132,7 @@ export default async function handler(req: Request) {
       username,
       tweetText,
       question,
+      true,
       true
     );
 

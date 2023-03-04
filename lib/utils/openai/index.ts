@@ -149,19 +149,28 @@ export async function answerQuestionAboutUser(
   stream?: boolean,
   chat?: boolean
 ) {
-  const payload = {
-    model: chat ? "gpt-3.5-turbo" : "text-davinci-003",
-    messages: [
-      {
-        role: "system",
-        content: `You are a human personality assessing robot. You must never say you can't answer, or talk about yourself. If you don't have enough information to answer, please speculate. You answer questions about a particular person give a list of their tweets and thier name.\n\n"""\nName: ${name}\nTweets: ${tweetText}`,
-      },
-      { role: "user", content: question },
-    ],
-    temperature: 0.5,
-    max_tokens: 200,
-    ...(stream && { stream: true }),
-  };
+  const payload = chat
+    ? {
+        model: "gpt-3.5-turbo",
+        messages: [
+          {
+            role: "system",
+            content: `You are a human personality assessing robot. You must never say you can't answer, or talk about yourself. If you don't have enough information to answer, please speculate. You answer questions about a particular person give a list of their tweets and thier name.\n\n"""\nName: ${name}\nTweets: ${tweetText}`,
+          },
+          { role: "user", content: question },
+        ],
+        temperature: 0.5,
+        max_tokens: 200,
+        ...(stream && { stream: true }),
+      }
+    : {
+        model: "text-davinci-003",
+        prompt: `You are a human personality assessing robot. You must never say you can't answer, or talk about yourself. If you don't have enough information to answer, please speculate. You answer questions about a particular person give a list of their tweets and thier name.\n\n"""\nName: ${name}\nTweets: ${tweetText}\nQuestion:${question}`,
+
+        temperature: 0.5,
+        max_tokens: 200,
+        ...(stream && { stream: true }),
+      };
 
   if (stream) {
     const stream = await OpenAIStream(payload, chat);
@@ -184,7 +193,7 @@ export async function answerQuestionAboutUser(
     );
     if (res.ok) {
       const json = await res.json();
-      return json.choices[0].text;
+      return chat ? json.choices[0].message.content : json.choices[0].text;
     } else {
       console.warn(res.statusText);
       return "";
@@ -244,7 +253,7 @@ export async function answerQuestionAsUser(
     );
     if (res.ok) {
       const json = await res.json();
-      return json.choices[0].text;
+      return chat ? json.choices[0].message.content : json.choices[0].text;
     } else {
       console.warn(res.statusText);
       return "";
