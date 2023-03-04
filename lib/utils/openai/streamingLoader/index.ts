@@ -10,23 +10,42 @@ type OpenAIPayload = {
   temperature: number;
   presence_penalty?: number;
   frequency_penalty?: number;
+  top_p?: number;
   max_tokens: number;
 };
 
-export async function OpenAIStream(payload: OpenAIPayload) {
+type OpenAIChatPayload = {
+  model: string;
+  messages: { role: string; content: string }[];
+  temperature: number;
+  presence_penalty?: number;
+  frequency_penalty?: number;
+  top_p?: number;
+  max_tokens: number;
+};
+
+export async function OpenAIStream(
+  payload: OpenAIPayload | OpenAIChatPayload,
+  chat?: boolean
+) {
   const encoder = new TextEncoder();
   const decoder = new TextDecoder();
 
   let counter = 0;
 
-  const res = await fetch("https://api.openai.com/v1/completions", {
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${process.env.OPENAI_API_KEY ?? ""}`,
-    },
-    method: "POST",
-    body: JSON.stringify(payload),
-  });
+  const res = await fetch(
+    chat
+      ? "https://api.openai.com/v1/chat/completions"
+      : "https://api.openai.com/v1/completions",
+    {
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${process.env.OPENAI_API_KEY ?? ""}`,
+      },
+      method: "POST",
+      body: JSON.stringify(payload),
+    }
+  );
 
   const stream = new ReadableStream({
     async start(controller) {
@@ -39,8 +58,11 @@ export async function OpenAIStream(payload: OpenAIPayload) {
           }
           try {
             const json = JSON.parse(data);
-            const text = json.choices[0].text;
-            if (counter < 2 && (text.match(/\n/) || []).length) {
+
+            const text = chat
+              ? json.choices[0].delta.content
+              : json.choices[0].text;
+            if (counter < 2 && text && (text.match(/\n/) || []).length) {
               return;
             }
             const queue = encoder.encode(text);

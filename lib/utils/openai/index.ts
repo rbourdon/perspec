@@ -146,30 +146,42 @@ export async function answerQuestionAboutUser(
   username: string,
   tweetText: string,
   question: string,
-  stream?: boolean
+  stream?: boolean,
+  chat?: boolean
 ) {
   const payload = {
-    model: "text-davinci-003",
-    prompt: `Read the following user details, including real name and list tweets, and then answer the question about the user in the tone of a psychologist. Explain your answer and cite tweets if possible. If it isn't possible to answer based on the tweets, you should speculate.\n\n"""\nName: ${name}\nTweets: ${tweetText}.\n"""\n\nQuestion: ${question}\n\nAnswer:`,
-    temperature: 0.35,
-    max_tokens: 180,
+    model: chat ? "gpt-3.5-turbo" : "text-davinci-003",
+    messages: [
+      {
+        role: "system",
+        content: `You are a human personality assessing robot. You must never say you can't answer, or talk about yourself. If you don't have enough information to answer, please speculate. You answer questions about a particular person give a list of their tweets and thier name.\n\n"""\nName: ${name}\nTweets: ${tweetText}`,
+      },
+      { role: "user", content: question },
+    ],
+    temperature: 0.5,
+    max_tokens: 200,
     ...(stream && { stream: true }),
   };
 
   if (stream) {
-    const stream = await OpenAIStream(payload);
+    const stream = await OpenAIStream(payload, chat);
 
     return stream;
   }
   try {
-    const res = await fetch("https://api.openai.com/v1/completions", {
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${process.env.OPENAI_API_KEY ?? ""}`,
-      },
-      method: "POST",
-      body: JSON.stringify(payload),
-    });
+    const res = await fetch(
+      chat
+        ? "https://api.openai.com/v1/chat/completions"
+        : "https://api.openai.com/v1/completions",
+      {
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${process.env.OPENAI_API_KEY ?? ""}`,
+        },
+        method: "POST",
+        body: JSON.stringify(payload),
+      }
+    );
     if (res.ok) {
       const json = await res.json();
       return json.choices[0].text;
@@ -188,28 +200,48 @@ export async function answerQuestionAsUser(
   username: string,
   tweetText: string,
   question: string,
-  stream?: boolean
+  stream?: boolean,
+  chat?: boolean
 ) {
-  const payload = {
-    model: "text-davinci-003",
-    prompt: `"""\n${tweetText}\n"""\n\nThe above text is a list of tweets made by ${name}. Using the tweets to determine the most likely answer, pretend to be ${name} and answer the following question in their speaking style and language.\n\nQuestion: ${question}\n\nAnswer:`,
-    temperature: 0.2,
-    max_tokens: 120,
-    ...(stream && { stream: true }),
-  };
+  const payload = chat
+    ? {
+        model: "gpt-3.5-turbo",
+        messages: [
+          {
+            role: "system",
+            content: `"""\n${tweetText}\n"""\n\nThe above text is a list of tweets made by ${name}. Using the tweets to determine the most likely answer, pretend to be ${name} and answer the following question in their speaking style and language.\n\n`,
+          },
+          { role: "user", content: question },
+        ],
+        temperature: 0.2,
+        max_tokens: 120,
+        ...(stream && { stream: true }),
+      }
+    : {
+        model: "text-davinci-003",
+        prompt: `"""\n${tweetText}\n"""\n\nThe above text is a list of tweets made by ${name}. Using the tweets to determine the most likely answer, pretend to be ${name} and answer the following question in their speaking style and language.\n\nQuestion: ${question}\n\nAnswer:`,
+        temperature: 0.2,
+        max_tokens: 120,
+        ...(stream && { stream: true }),
+      };
   if (stream) {
-    const stream = await OpenAIStream(payload);
+    const stream = await OpenAIStream(payload, chat);
     return stream;
   }
   try {
-    const res = await fetch("https://api.openai.com/v1/completions", {
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${process.env.OPENAI_API_KEY ?? ""}`,
-      },
-      method: "POST",
-      body: JSON.stringify(payload),
-    });
+    const res = await fetch(
+      chat
+        ? "https://api.openai.com/v1/chat/completions"
+        : "https://api.openai.com/v1/completions",
+      {
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${process.env.OPENAI_API_KEY ?? ""}`,
+        },
+        method: "POST",
+        body: JSON.stringify(payload),
+      }
+    );
     if (res.ok) {
       const json = await res.json();
       return json.choices[0].text;
@@ -229,25 +261,34 @@ export async function analyzeUser(
   tweetText: string
 ) {
   try {
-    const res = await fetch("https://api.openai.com/v1/completions", {
+    const res = await fetch("https://api.openai.com/v1/chat/completions", {
       headers: {
         "Content-Type": "application/json",
         Authorization: `Bearer ${process.env.OPENAI_API_KEY ?? ""}`,
       },
       method: "POST",
       body: JSON.stringify({
-        model: "text-davinci-003",
-        prompt: `Provided a person's tweets, their handle, and their real name, act as a psychologist and describe the person. Make sure to talk about both their success and failures. Be specific and speculate.\n\n"""\nName: ${name}\nHandle: ${username}\nTweets: ${tweetText}.\n"""\n\nAnalysis:`,
+        model: "gpt-3.5-turbo",
+        messages: [
+          {
+            role: "system",
+            content: `You are a psychologist. You should answer questions about a particular person given their name, online handle, and a list of their tweets. You don't need to mention their name or handle in your answer.\n\n"""\nName: ${name}\nHandle: ${username}\nTweets: ${tweetText}`,
+          },
+          {
+            role: "user",
+            content:
+              "Describe this person, being specific and citing tweets where possible. Speculate if needed.",
+          },
+        ],
         temperature: 0.8,
-        presence_penalty: 0.3,
-        frequency_penalty: 0.1,
-        max_tokens: 300,
+        max_tokens: 250,
         stream: false,
       }),
     });
     if (res.ok) {
       const json = await res.json();
-      return json.choices[0].text as string;
+
+      return json.choices[0].message.content as string;
     } else {
       console.warn(res.status, res.statusText);
       return "Failed to get user analysis. Please check back later.";
@@ -264,18 +305,27 @@ export async function analyzeUserCommunityView(
   tweetText: string
 ) {
   try {
-    const res = await fetch("https://api.openai.com/v1/completions", {
+    const res = await fetch("https://api.openai.com/v1/chat/completions", {
       headers: {
         "Content-Type": "application/json",
         Authorization: `Bearer ${process.env.OPENAI_API_KEY ?? ""}`,
       },
       method: "POST",
       body: JSON.stringify({
-        model: "text-davinci-003",
-        prompt: `Provided tweets directed at a person, their handle, and their real name, describe how people see the person. Be specific and speculate.\n\n"""\nName: ${name}\nHandle: ${username}\nTweets: ${tweetText}.\n"""\n\nAnalysis:`,
-        temperature: 0.5,
-        presence_penalty: 0.3,
-        frequency_penalty: 0.1,
+        //model: "text-davinci-003",
+        //prompt: `Provided tweets directed at a person, their handle, and their real name, describe how people see the person. Be specific and speculate.\n\n"""\nName: ${name}\nHandle: ${username}\nTweets: ${tweetText}.\n"""\n\nAnalysis:`,
+        model: "gpt-3.5-turbo",
+        messages: [
+          {
+            role: "system",
+            content: `You are a psychologist. You should answer questions about the community's view of a particular person given their name, online handle, and a list of tweets directed at them by other people in the community. You don't need to mention their name or handle in your answer. \n\n"""\nName: ${name}\nHandle: ${username}\nTweets: ${tweetText}`,
+          },
+          {
+            role: "user",
+            content: "What do people think about this person?",
+          },
+        ],
+        temperature: 0.7,
         max_tokens: 300,
         stream: false,
       }),
@@ -283,7 +333,7 @@ export async function analyzeUserCommunityView(
 
     if (res.ok) {
       const json = await res.json();
-      return json.choices[0].text;
+      return json.choices[0].message.content;
     } else {
       console.warn(res.status, res.statusText);
       return "Failed to get user analysis. Please check back later.";
