@@ -136,7 +136,7 @@ export default function Question({
       </Head>
       <motion.main
         layout
-        className="flex flex-col items-center w-full min-h-screen"
+        className="flex flex-col items-center w-full min-h-screen pb-32"
       >
         <motion.div layout className="w-full flex justify-end px-8 py-4">
           <button type="button" onClick={() => signOut()}>
@@ -190,7 +190,7 @@ export default function Question({
               )}
               {aiResponse && (
                 <>
-                  <motion.p layout className="w-full mt-8 font-bold text-lg">
+                  <motion.p layout className="w-full mt-12 font-bold text-lg">
                     {name}:
                   </motion.p>
                   <motion.p
