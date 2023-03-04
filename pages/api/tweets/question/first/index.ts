@@ -106,10 +106,7 @@ export default async function handler(req: Request) {
 
   const perspective = await determineQuestionPerspective(question);
 
-  if (
-    perspective.toLowerCase() === "first" ||
-    perspective.toLowerCase() === "third"
-  ) {
+  if (perspective.toLowerCase() !== "second") {
     const secondPersonQuestion = await convertToSecond(question);
 
     const answer = await answerQuestionAsUser(
@@ -117,6 +114,7 @@ export default async function handler(req: Request) {
       username,
       tweetText,
       secondPersonQuestion,
+      true,
       true
     );
 

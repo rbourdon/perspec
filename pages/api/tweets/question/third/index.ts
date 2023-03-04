@@ -99,10 +99,7 @@ export default async function handler(req: Request): Promise<Response> {
   const tweetText = tweetsToTokenText(finalTweets, 3400);
   const perspective = await determineQuestionPerspective(question);
 
-  if (
-    perspective.toLowerCase() === "first" ||
-    perspective.toLowerCase() === "second"
-  ) {
+  if (perspective.toLowerCase() !== "third") {
     const thirdPersonQuestion = await convertToThird(question);
 
     const analysis = await answerQuestionAboutUser(
@@ -110,6 +107,7 @@ export default async function handler(req: Request): Promise<Response> {
       username,
       tweetText,
       thirdPersonQuestion,
+      true,
       true
     );
 
@@ -127,6 +125,7 @@ export default async function handler(req: Request): Promise<Response> {
       username,
       tweetText,
       question,
+      true,
       true
     );
 
